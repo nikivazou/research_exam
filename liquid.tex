@@ -1,0 +1,235 @@
+	\newcommand\qset{\ensuremath{\mathbb{Q}}}
+
+\section{Liquid Types}
+
+
+In this section we will present a dependent type system which is decidable.
+As we stated in the introduction, if the refinement of a type can be an arbitrary 
+program expression, then type checking is undecidable.
+%
+In Liquid Types Rondon et all restricted the refinement logic according to a predetermined 
+finite set of qualifiers,  which gives not only decidable type checking, but also automatic
+type inference.
+
+
+
+The system takes as input a program and a set of logical qualifiers
+which are simple boolean predicates over the program variables, a
+special value variable @v@, and a special placeholder variable ?$\star$ that
+can be instantiated with program variables. The system then infers
+liquid types, which are dependent types where the refinement predicates are conjunctions of the logical qualifiers.
+In the system, type checking and inference are decidable for
+three reasons. 
+%
+First, they use a conservative but decidable
+notion of subtyping, where they reduce the subtyping of arbitrary
+dependent types to a set of implication checks over base types,
+each of which is deemed to hold if and only if an embedding of
+the implication into a decidable logic yields a valid formula in
+the logic. 
+%
+Second, an expression has a valid liquid type derivation
+only if it has a valid unrefined type derivation, and the dependent 
+type of every subexpression is a refinement of its vanilla type. 
+%
+Third, in any valid type derivation, the types of certain expressions
+must be liquid. Thus, inference becomes decidable, as the space of
+possible types is bounded. 
+
+
+\subsection{Logical Qualifiers and Liquid Types.}
+
+A logical qualifier is a
+boolean-valued expression (i.e., predicate) over the program variables, 
+the special value variable @v@ which is distinct from the
+program variables, and the special placeholder variable $\star$ that
+can be instantiated with program variables. 
+We can assume, that $\mathcal{Q}$ is the set of logical qualifiers
+$\{0 \leq v, \star \leq v, v < \star,  v = \star + 1, v < len \star\}$. 
+%
+We say that
+a qualifier q matches the qualifier $q'$
+if replacing some subset of
+the free variables in q with $\star$ yields $q'$.
+For example, the qualifier
+$x \leq v$ matches the qualifier $\star \leq v$. 
+We write $\mathcal{Q}^\star$
+for the set of all
+qualifiers not containing $\star$ that match some qualifier in \qset. 
+For example, when \qset is as defined as above, $\qset^\star$
+includes the qualifiers
+$\{0 \leq v, x \leq v, y \leq v, v = n + 1, k \leq v, v <n, v < len a \}$. 
+A liquid type over \qset is a dependent type where the refinement predicates are
+conjunctions of qualifiers from $\qset ^ \star$.
+
+
+As an example consider our pred example
+
+\begin{verbatim}
+pred n = n - 1
+\end{verbatim}
+
+(Step 1) HM infers that pred has the type $Int -> Int$.
+Using this type, we create a template for the liquid type of pred,
+$$
+pred :: n:{v:Int | k_n} -> {v:Int | k_p}
+$$
+
+where $k_n$ and $k_p$
+are liquid type variables representing the unknown refinements for the formals n
+ and the body of pred, respectively.
+
+
+(step 2)
+
+If moreover we assume:
+$$
+(-) :: x:Int -> y:Int -> {v:Int | v = x - y}\\ 
+1 :: {v:Int | v = 1}
+$$
+
+Then in an environment with 
+
+$$
+n:{v:Int | k_1}
+$$
+we have that if 
+
+$$
+{v:Int | k_1} <: Int
+{v:Int | v = 1} <: Int
+$$
+then 
+$$
+n - 1 :: {v:Int | v = n - 1} <: {v:Int | k_2}
+$$
+
+So, we get the subtyping constraint 
+
+$$
+{v:Int | v = n - 1} <: {v:Int | k_2}
+$$
+
+which reduces to the implication constraint 
+
+$$
+v = n - 1 \Rightarrow k_2
+$$
+
+(step 3)
+Since the program is ``open'', i.e., there are no calls to pred,
+we assign $k_n$ true, meaning that any integer arguments can be
+passed, and use a theorem prover to find the strongest conjunction
+of qualifiers in \qset
+that satisfies the subtyping constraints. 
+The algorithm
+infers that $v = n-1$ is the strongest solution for $k_p$.
+By substituting the solution for $k_p$ into
+the template for pred, our algorithm infers
+$pred :: n:int -> \{v :Int | v = n-1 \}$
+
+
+\subsection*{Contraining the argument}
+As one may notice the type signature of pred does not constrain the type of the argument.
+This happens because the code for pred produces no such consraint.
+We could manually specify a type for pred
+
+$$
+pred :: n:{v:Int | v > 0} -> {v:Int | n - 1}
+$$
+
+Then then first step of the infrence will be skipped and the 
+body of the function will be type checked against the given signature.
+
+So, in the second step, as before, we will create an implication
+$$n-1 \Rightarrow n - 1 $$. That can trivially be verified in the third step.
+
+If we have use the above type signature and we call pred with some in, say 42
+then in the call site the constraint $v = 42 \Rightarrow v >0$ will be generated, that can easily
+be verified.
+%
+On the other hand, if we call it with zero, we will get the constraint
+$v = 0 \Rightarrow v >0$, that does not hold, 
+so our program will be unsafe.
+
+\subsection{Applications of Liquid Types}
+
+Liquid Types, as introduced in \cite{LiquidPLDI08} used OCaml as target language
+and were used to verify properties such as array bound checking.
+In \cite{LiquidPLDI09} they were extended with recursive and polymorphic refinements
+to enable static verification of complex data structures. For example they proved
+that a list is sorted or that a tree is a Binary Search Tree.
+%
+Liquid Types can be used to verify properties even in imperative languages.
+In \cite{Rondon10} they present a refinement type system for
+C based on Liquid Types to verify memory safety properties, 
+like the absence of array bounds violations
+and null-dereferences.
+In \cite{Kawaguchi12}
+they present Liquid Effects, a type-and-effect system based on refinement types
+which allows for fine-grained, low-level, shared memory multithreading while statically guaranteeing that a program is deterministic. 
+
+\subsection{Formal Language}
+
+As we said earlier, the refinements in the language 
+can not contain arbitrary expressions, but they are limited
+to conjuctions of the logical qualifiers, which form a finite set.
+They use a subtyping relation similar to 
+hybrid type checking, but since their refinemet language is restricted, 
+the subtyping relation is decidable.
+
+\begin{figure}[t!]
+\centering
+$$
+\begin{array}{rrcl}
+\emphbf{Predicates} \quad 
+  & p
+  & 		\text{true}
+  \spmid q
+  \spmid p \land p
+  & \dots
+  \\[0.05in] 
+\end{array}
+$$
+\caption{\textbf{Syntax of Expressions, Types and Schemas}}
+\label{fig:syntax}
+\end{figure}
+
+
+\begin{figure}[ht!]
+\medskip \judgementHead{Subtyping}{\isSubType{\Gamma}{\tau_1}{\tau_2}}
+
+$$
+\inference
+   {\Gamma, v:b \vdash  p1 \Rightarrow p2 }
+   {\isSubType{\Gamma}{\tref{b}{p_1}}{\tref{b}{p_2}}}
+   [\tsubBase]
+$$
+
+$$
+\inference
+   {\isSubType{\Gamma}{\tau_2}{\tau_1} &
+	\isSubType{\Gamma, x_2:{\tau_2}}{\SUBST{\tau_1'}{x_1}{x_2}}{\tau_2'}	
+   }
+   {\isSubType{\Gamma}
+	  {\tfun{x_1}{\tau_1}{\tau_1'}}
+	  {\tfun{x_2}{\tau_2}{\tau_2'}}
+}[\tsubFun]
+$$
+
+
+\medskip \judgementHead{Type Checking}{$\hastype{\Gamma}{e}{\tau}$}
+
+$$\begin{array}{cc}
+
+\inference
+  {  \hastype{\Gamma}{e}{\tau_2} && \isSubType{\Gamma}{\tau_2}{\tau_1} 
+  && \isWellFormed{\Gamma}{\tau_1}
+  }
+  {\hastype{\Gamma}{e}{\tau_1}}
+  [\tsub]
+\end{array}$$
+
+\caption{\textbf{Static Semantics: Well-formedness, Subtyping and Type Checking}}
+\label{fig:rules}
+\end{figure}

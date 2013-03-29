@@ -1,0 +1,404 @@
+\newcommand\tlabel{T-Label}
+\newcommand\tcast{T-Cast}
+
+\newcommand\cbase{C-Base}
+\newcommand\cfunction{C-Fun}
+
+
+\newcommand\elabel[1]{\ensuremath{\Uparrow \ #1}}
+\newcommand\ecast[2]{\ensuremath{\langle #1 \Rightarrow #2 \rangle}}
+
+\newcommand\isCompatible[2]{\ensuremath{ #1 \Vert #2 }}
+
+
+
+\section{Undecidable}
+
+In our language $\lambda_D$ we presented a dependent type system, 
+but we did not provide any means of reasoning 
+
+Say for example that we know that 
+
+$$
+pred :: n:{v:Int | v > 0} -> {v:Int | v = n - 1}
+$$
+
+We will describe three usual ways to reaons this
+
+\begin{itemize}
+\item Interactive theorem proving
+\item Casting
+\item Algorithmic Type Checking
+\end{itemize}
+
+\subsection{Interactive theorem Proving}
+
+Many systems, such as Coq, Agda and Isabelle, ask uses to provide such proofs.
+Consider Coq, 
+We can write a function pred with the type signature
+
+$$
+pred :: s:{n : nat | n > 0 }  -> {v:nat | s = S v}
+$$
+
+There are two doefferent prooves assotiated with this signature
+\begin{itemize}
+\item For a function to typecheck against this signsture, 
+inside of its body the programmer should construct a proof that the 
+result satisfies the type
+\item At each call side, the user should provide a proof that 
+the argument passed in the function is positive
+\end{itemize}
+
+In more details, in Coq, refinements types are
+implemented using the type family "sig", as defined in the standar library:
+
+\begin{verbatim}
+Inductive sig (A : Type) (P : A -> Prop) : Type :=
+    exist : forall x : A, P x -> sig P
+\end{verbatim}
+
+and uses the notation
+
+\begin{verbatim}
+Notation
+  "{ x : A | P }" := sig (fun x : A => P)
+\end{verbatim}    
+    
+    
+The definition of pred function is
+
+\begin{verbatim}
+Definition pred (s : {n : nat | n > 0}) : {m : nat | proj1_sig s = S m} :=
+  match s return {m : nat | proj1_sig s = S m} with
+    | exist 0 pf => match zgtz pf with end
+    | exist (S n') pf => exist _ n' (eq_refl _)
+  end.
+\end{verbatim}
+
+where zgtz
+
+\begin{verbatim}
+Lemma zgtz : 0 > 0 -> False.
+  crush.
+Qed.
+
+Inductive eq (A:Type) (x:A) : A -> Prop :=
+    eq_refl : x = x :>A
+\end{verbatim}
+
+The argument is a number n and a proof that it is greater
+than zero.
+So, when it is matched with 0, we use this proof to derive a contradiction.
+When it is much to $(S n')$ we use the $eq_refl$ constructor of equality to 
+create a proof n' is the predecessor of n.
+
+
+Even this example seems tedious, using interactive theorem prooving can be simplified
+using inference and tacticks. Though, the user needs still to provide proofs.
+We will discuss other systems, which remove this burden from the user.
+
+\subsection{Manifest Contracts}
+
+\subsubsection{Contracts}
+Contracts are dynamically enforced pre- and post assertions.
+and they play an important role in the construction of robust soft- 
+ware. 
+Their use in programming languages dates back to the 1970s. 
+Eiffel \cite{Eiffel}, an object-oriented programming language,
+totally adopted assertions and developed the 
+``Design by Contract'' philosophy \cite{Meyer92}.
+
+ 
+\paragraph*{Contracts for Higher-Order Functions}
+Findler and Felleisen in \cite{Findler02} were the first to
+integrate contracts in higher order languages.
+
+
+
+
+Findler and Felleisen  created the first type system with contracts, $\lambda^{\textsc{CON}}$ 
+where the expressions are extended with ``obligations'':
+$e^{E, x_1, x_2}$
+The first superscript is a contract expression that the base expression
+is obliged to meet. The last two are variables. The variables enable
+the contract monitoring system to assign blame properly. The first
+variable names the party responsible for values that are produced by
+the expression under the superscript (covariant) and the second variable names
+the party responsible for values that it consumes(contravariant).
+
+
+The above two basic characteristics, are summarized in the obligation reduction rules:
+$$
+V_1^{V_2, p, n} \longrightarrow if \ V_2(V_1) \ then \  V_1  \ else \ blame(``p'')
+$$
+
+$$
+V_1^{V_3\longmapsto V_4, p, n} \longrightarrow (V_1 V_2^{V_3, n, p})^{V_4, p, n}
+$$
+
+The first rule shows how contracts are checked for first order values, while
+the second rules is the enforcement of the ``even-odd'' rule.
+
+Other features or their system are the two following:
+\begin{itemize}
+\item they allow dependent contracts, ie of the form $int [>0] \rightarrow int [\lambda x \lambda v. v >x]$
+that describes a function that gives a positive integer $x$ it returns a value greater than $x$
+\item they treat contracts as first class values, ie, contracts are values that can be passed to and from functions
+\end{itemize}
+
+
+Soundness and completeness \cite{BlumeM06}
+
+\begin{verbatim}
+Manifest Constracts Systems use casts , <Int => {v:Int | v > 0}> to convert 
+values from one type to another,
+(the left-
+hand side is the source type and the right-hand side is the target type)
+
+For
+base contracts, a cast will behave just like a check on the target type: ap-
+plied to n, the cast either returns n or raises \\l . 
+
+A function cast ( T11 ->
+T12 -> T21 -> T22 l v ) v will reduce to T12 -> T22 l (v ( T21 -> T11 l v )),
+wrapping the argument v in a (contravariant) cast between the domain types
+and wrapping the result of the application in a (covariant) cast between the
+codomain types.
+
+\end{verbatim}
+
+
+$$
+pred ::x:{v:Int | v > 0} -> {v:Int | v = x - 1} 
+$$
+\begin{verbatim}
+pred' x = x - 1
+pred = <Int -> Int => x:{v:Int | v > 0} -> {v:Int | v = x - 1}> pred'
+\end{verbatim}
+
+\begin{verbatim}
+pred-> 
+  (<Int -> Int => x:{v:Int | v > 0} -> {v:Int | v = x - 1}>p (\x -> x - 1) ) ->  
+  \y:{v:Int | v > 0} (<Int => {v:Int | v = y-1} >p  ((\x -> x - 1) (<{v:Int | v > 0 }  => Int> y) ) ) 
+  \y:{v:Int | v > 0} (<Int => {v:Int | v = y-1} >p  y-1 ) ) 
+  
+pred 0  -> no type check!
+pred (<Int => {v:Int | v > 0 }u> 0)  -> || u
+
+
+pred (<Int => {v:Int | v > 0 }u> 9)  -> 
+   pred 9 -> 
+  \y:{v:Int | v > 0} (<Int => {v:Int | v = y-1} >  y-1 ) ) 9
+  <Int => {v:Int | v = 9-1} >  9-1 )
+  <Int => {v:Int | v = 8} >  8 )
+  8
+
+
+badpred 9 -> 
+  \y:{v:Int | v > 0} (<Int => {v:Int | v = y-1} >  y-3 ) ) 9
+  <Int => {v:Int | v = 9-1} >  6 )
+  <Int => {v:Int | v = 8} >p  6 )
+  ||p
+
+\end{verbatim}
+
+\subsubsection{Formal Language}
+
+In the expressions of our language we should add a blaming expression
+and a type casting.
+As a refinement the language can use any core expression.
+Everything else remains unchanged.
+
+
+In the typing judgements we add two rules:
+a blame expression can have any well formed types, 
+while a type casting expression behaves as a function from the 
+source to the target type.
+For a casting expression to typecheck, both types should be 
+well formed and compatible, ie, their unrefined types should be 
+the same. We check this through a new compatibility judgement.
+
+\begin{figure}[t!]
+\centering
+$$
+\begin{array}{rrcl}
+\emphbf{Expressions} \quad 
+  & e 
+  & ::= \dots
+  \spmid \elabel{l} 
+  \spmid \ecast{\tau}{\tau} 
+  \\[0.05in] 
+
+\emphbf{Predicates} \quad 
+  & p
+  & ::= e
+  & \dots
+  \\[0.05in] 
+
+\end{array}
+$$
+\caption{\textbf{Syntax of Expressions, Types and Schemas}}
+\label{fig:syntax}
+\end{figure}
+
+
+\begin{figure}[ht!]
+
+\medskip \judgementHead{Compatibility}{$\isCompatible{\tau_1}{\tau_2}$}
+$$\begin{array}{cc}
+
+\inference
+  {}
+  {\isCompatible{\tref{b}{p_1}}{\tref{b}{p_2}}}
+  [\cbase]
+
+&
+
+\inference
+  {\isCompatible{\tau_{x_1}}{\tau_{x_2}} &&
+   \isCompatible{\tau_1}{\tau_2}}
+  {\isCompatible{\tfun{x_1}{\tau_{x_1}}{tau_1}}{\tfun{x_2}{\tau_{x_2}}{\tau_2}}}
+  [\cfunction]
+\end{array}$$
+
+
+
+\medskip \judgementHead{Type Checking}{$\hastype{\Gamma}{e}{\tau}$}
+$$\begin{array}{cc}
+
+\inference
+  {\isWellFormed{\Gamma}{\tau}}
+  {\hastype{\Gamma}{\elabel{l}}{\tau}}
+  [\tlabel]
+
+&
+
+\inference
+  {\isWellFormed{\Gamma}{\tau_1} &&
+   \isWellFormed{\Gamma}{\tau_2} && 
+   \isCompatible{\tau_1}{\tau_2}}
+  {\hastype{\Gamma}{\ecast{\tau_1}{\tau_2}}{\tfun{}{\tau_1}{\tau_2}}}
+  [\tcast]
+\end{array}$$
+
+
+\caption{\textbf{Static Semantics: Well-formedness, Subtyping and Type Checking}}
+\label{fig:rules}
+\end{figure}
+
+
+
+
+\subsection{Algorithmic Type Checking}
+
+The great disadvantage of $\lambda^{\textsc{CON}}$ is that all contracts are checked in runtime, 
+so type checking consumes cycles that otherwise would perform useful computation.
+Moreover limited coverage is provided: contracts are checked only for data values and
+code paths of actual execution.
+This disadvantages are eliminated in Flanagan's Hybrid Type Checking \cite{Flanagan06}.
+In their system, $\lambda^H$, they encoded contracts as dependent types:
+
+
+Instead of type casting they used subtyping to convert values from one type to another.
+Which in turn reduces to implication checking.
+Their type system checks implications statically, whenever possible
+and dynamically, only when necessary:
+
+
+Consider our pred example::
+
+\begin{verbatim}
+pred :: x:{v : Int | v > 0} -> {v:Int | v = x - 1}
+pred x = x - 1
+\end{verbatim}
+
+Say that we apply this function to the integer 8
+and we can assume that  for all integers ty(n) = {v:Int | v = n}.
+
+For this application to typecheck, we should prove that 
+$$ {v:Int | v = 8} <: {v : Int | v > 0} $$
+which reduces to 
+$$ v = 8 \Rightarrow v > 0 $$
+which is easy to prove by any algorithm that uses linear arithmentic.
+
+But this reasining may create implications harder to prove.
+
+They assume that 
+there exists an algorithm that within limited time can
+conservatively approximate implications between predicates.
+They apply this algorithm to each implication and there are three cases:
+\begin{itemize}
+\item The algorithm proves that $E \vdash s \Rightarrow t$, this the relates contract
+will always succeed.
+\item The algorithm proves that $E \nvdash s \Rightarrow t$, this the relates contract
+will always fails and the program is rejected..
+\item The algorithm can not prove any of the above.
+Thus, the expression is annotated with a type cast $\langle T_e \vartriangleright T_f\rangle e$
+to dynamically ensure that values returned by $e$ are actually of the desired type $T_f$.
+\end{itemize}
+
+So actually they trnsform the program to add all required type casts, but they prove that
+the original and the transformed program are ``bisimilar'', ie they behave equivallent with respect to 
+operational semantics.
+
+Finally he proves that for any static type checker S, it is possible to 
+develop a hybrid type checker H
+that performs somewhat better than S in the following sense:
+\begin{itemize}
+\item H dynamically detects errors that would be missed by S, since
+H supports more precise specifications than S and can detect
+violations of these specifications dynamically.
+\item H statically detects all errors that would be detected by S, since
+H can statically perform the same reasoning as S.
+\item H actually detects more errors statically than S, since H sup-
+ports more precise specifications, and could reasonably detect
+some violations of these precise specifications statically.
+\end{itemize}
+
+\subsubsection{Formal Language}
+
+The syntax of $\lambda_H$ is the same as $\lambda_C$, we only add the substyping rules.
+As we stated, the source program goes through a transformation and the nessecary casts are added.
+Thus, every time the \tsub rule is used, it is guaranteened that their algorithm can prove
+the subtyping relation.
+
+\begin{figure}[ht!]
+\medskip \judgementHead{Subtyping}{\isSubType{\Gamma}{\tau_1}{\tau_2}}
+
+$$
+\inference
+   {\Gamma, v:b \vdash  p1 \Rightarrow p2 }
+   {\isSubType{\Gamma}{\tref{b}{p_1}}{\tref{b}{p_2}}}
+   [\tsubBase]
+$$
+
+$$
+\inference
+   {\isSubType{\Gamma}{\tau_2}{\tau_1} &
+	\isSubType{\Gamma, x_2:{\tau_2}}{\SUBST{\tau_1'}{x_1}{x_2}}{\tau_2'}	
+   }
+   {\isSubType{\Gamma}
+	  {\tfun{x_1}{\tau_1}{\tau_1'}}
+	  {\tfun{x_2}{\tau_2}{\tau_2'}}
+}[\tsubFun]
+$$
+
+
+\medskip \judgementHead{Type Checking}{$\hastype{\Gamma}{e}{\tau}$}
+
+$$\begin{array}{cc}
+
+\inference
+  {  \hastype{\Gamma}{e}{\tau_2} && \isSubType{\Gamma}{\tau_2}{\tau_1} 
+  && \isWellFormed{\Gamma}{\tau_1}
+  }
+  {\hastype{\Gamma}{e}{\tau_1}}
+  [\tsub]
+\end{array}$$
+
+\caption{\textbf{Static Semantics: Well-formedness, Subtyping and Type Checking}}
+\label{fig:rules}
+\end{figure}
+
+ 

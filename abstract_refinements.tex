@@ -1,0 +1,111 @@
+\section{Abstract Refinement Types}
+
+In this section, we present abstract refinement types which enable quantification over
+the refinements of data- and function-types. 
+%
+The key insight is that we can avail
+of quantification while preserving SMT-based decidability, simply by encoding
+refinement parameters as uninterpreted propositions within the refinement logic.
+We illustrate how this mechanism yields a variety of sophisticated means for
+reasoning about programs, including: 
+index-dependent refinements for reasoning about key-value maps,
+recursive refinements for reasoning about recursive data types, and 
+inductive refinements for reasoning about higher-order traversal routines. 
+
+\subsection{The key idea}
+Consider the monomorphic max function on @Int@ values, 
+with the (monomorphic) signature
+$$\centering\begin{tabular}{c}
+\begin{code}
+max     :: Int -> Int -> Int
+\end{code}
+\end{tabular}$$
+One could refine the signature to state that
+if both arguments enjoy a specific property, then the result
+will also have this property.
+
+We could type
+%@max :: forall t <: Int. t -> t -> t@
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+max :: forall t <: Int. t -> t -> t
+\end{code}
+\end{tabular}$$
+but this route would introduce the complications
+that surround bounded quantification which could render checking 
+undecidable~\cite{piercebook}.
+
+To solve this problem, we introduce \emph{abstract refinements} 
+which let us 
+quantify or parameterize a type over its constituent refinements.
+For example, we can type @max@ as
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+max :: forall <p::Int->Bool>. Int<p> -> Int<p> -> Int<p>
+\end{code}
+\end{tabular}$$
+where @Int<p>@ is an abbreviation for the refinement type {@{v:Int | p(v)}@}.
+Intuitively, an abstract refinement @p@ is encoded in the refinement logic 
+as an \emph{uninterpreted function symbol}, which satisfies the
+\emph{congruence} axiom~\cite{Nelson81}
+%
+$$\forall \overline{X}, \overline{Y}: (\overline{X} = \overline{Y})
+\Rightarrow P(\overline{X}) = P(\overline{Y})$$
+%
+
+It is trivial to verify, with an SMT solver, that @max@ 
+enjoys the above type: the input types ensure that both @p(x)@ and @p(y)@ 
+hold and hence the returned value in either branch satisfies 
+the refinement  @{v:Int | p(v)}@, thereby ensuring the output 
+type. 
+
+In a call site, 
+we simply instantiate
+the \emph{refinement} parameter of @max@ with the concrete 
+refinement 
+after which type checking proceeds as usual. 
+%
+As an example, suppose that we call @max@ with two Even numbers:
+
+@n1 :: {v:Int | v % 2 = 0}@,
+@n2 :: {v:Int | v % 2 = 0}@,
+
+Then, the abstract refinement can be instantiated with a concrete predicate 
+@{\v -> v % 2 = 0}@, 
+which will give @max@ the type
+@max [{\v -> v % 2 = 0}] :: {v:Int |  v % 2 = 0} -> {v:Int |  v % 2 = 0} -> {v:Int |  v % 2 = 0}@
+% 
+Since both @n1@ and @n2@ are even numbers we can verify that the
+preconditions hold, so the result will also be even:
+@max [{\v -> v % 2 = 0}] n1 n2 :: {v:Int |  v % 2 = 0}@.
+
+This is the basic concept of abstract refinements, which , as we will see have many applications.
+
+\subsection{Inductive Refinements}
+Consider a for function that takes an integer @n@, 
+a base case @x@ and a function @body@ and applies 
+the function to the @x@ n times:
+
+$$\centering
+\begin{tabular}{c}
+%
+%for :: lo:Int -> hi:Int -> a<p lo lo> -> (i:Int -> a<p lo i> -> a<p lo (i+1)>) -> a<p lo hi>
+\begin{code}
+     for :: Int -> a -> (Int -> a -> a) -> a
+     for n x body      = loop 0 x 
+       where loop i x 
+               | i < n    = loop (i+1) (body i x)
+               | otherwise = x
+     
+     initUpto :: Vec a -> a -> Int -> Vec a 
+     initUpto a x n = for n a (\i -> set i x) 
+\end{code}
+\end{tabular}$$
+
+We can use the function for to inialize a vector up to n.
+Then we can prove that the result vector is initalized by induction:
+
+We can define a relation $R :: (Int, Vector a)$ between integers and vectors, 
+and gives it the meaning $R(n , a)$ iff $a$ is initialized upto $n$.

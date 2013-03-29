@@ -1,0 +1,333 @@
+\section{Dependent Types}
+
+\subsection{Overview}
+
+Functional programming languages, like ML and Haskell,
+come with strong static types system, which detects a lot 
+of errors at compile-time and enhances code documentation.
+
+
+The utility of these type systems stems from their ability to predict, 
+at compile-time, invariants about the run-time values computed by the program. 
+%
+Unfortunately, classical type systems only
+capture relatively coarse invariants. For example, the system can
+express the fact that a variable @i@ is of the type @int@, 
+meaning that it is always an integer, but not that it is always an integer within a
+certain range, say between 1 and 99. 
+%
+Thus, the type system is unable to statically ensure the safety of critical operations, 
+such as a division by i, or the accessing of an array a of size 100 at an index
+i. 
+%
+Instead, the language can only provide a weaker dynamic safety
+guarantee at the additional cost of high performance overhead.
+In an exciting development, several authors have proposed the
+use of dependent types [20] as a mechanism for enhancing the
+expressivity of type systems [14, 27, 2, 22, 10]. 
+
+Such a system can
+express the fact
+$$ i :: \tref{int}{1 \leq v  \land v \leq  99} $$
+
+which is the usual type @int@ together with a refinement stating that
+the run-time value of i is an always an integer between 1 and 99.
+
+With dependent types, we can defined a safe division operator:
+
+$$
+safeDiv :: int -> \tref{int}{v \neq 0} -> int
+$$
+$$
+safeDiv x y = x / y
+$$
+
+which expects two arguments: the first one can be any integer
+and the second should be an integer different than zero, and
+returns an integer.
+
+When the function @safeDiv@ is actually used, 
+the type system should check that the real arguments do not
+violate @safeDiv@'s specification:
+$$
+n1 = safeDiv 8 9
+n2 = safeDiv 8 0
+n3 = safeDiv 8 n1
+$$
+ 
+ 
+In the first example, the type system should infer that 9 :: \tref{int}{v>0}.
+Also, the second example should create a type error.
+Finally, the type system should infer if an arbitrary program expression
+can have a given refined type or not.
+
+\mypara{Dependent Function Types}
+
+Dependent types, allow the predicate of the result of a function
+to depend of function arguments.
+As an example, we can defined the @id@ function as
+
+$$\centering\begin{tabular}{c}\begin{code}
+id :: x:a -> {v:a|v=x}
+id x = x
+\end{code}\end{tabular}$$
+
+As a more complicated example, we can safely access an element
+of an array:
+$$\centering\begin{tabular}{c}\begin{code}
+len :: a:intarray -> {v:int|v>=0}
+sub :: a:intarray -> i:{v:int|0<=v and v< len a} -> int
+\end{code}\end{tabular}$$
+
+In the above example, @sub@ takes as arguments an array of integers
+and an index @i@, which should be greater or equal to zero
+and less than the length of the array, to return the integer
+stored at the index @i@ of @a@.
+
+\mypara{Decidability vs Expressiveness}
+If predicates can contain arbitrary program expressions, then 
+one can define an undecidable function:
+
+$$\centering\begin{tabular}{c}\begin{code}
+terminates    :: f:(a -> b) -> x:a -> bool
+terminates f x = match (f x) with | _ -> true
+\end{code}\end{tabular}$$
+
+and use it inside type predicates:
+
+$$\centering\begin{tabular}{c}\begin{code}
+f:(a->b) -> x: a ->  {v:a|terminates f x}
+\end{code}\end{tabular}$$
+
+Clearly, a dependent type system, which allows arbitrary
+program expressions as predicates is undecidable.
+
+In section  we will describe both undesidable dependent 
+type systems.
+In section we will describe type systems that restrict 
+the predicates language and are statically desidable.
+Finally, we will describe, how abstraction over predicates
+can enhance expressiveness of decidable type systems. 
+
+\subsection{A core language}
+
+To be able to formally describe type systems, we will define a formal 
+language $\lambda_D$, its syntax and type system:
+
+\mypara{Syntax}
+The syntax of expressions and types is summarized in Figure \ref{fig:syntax}.
+$\lambda_D$ expressions include variables, constants, $\lambda$-abstractions
+and function applications. 
+Basic types can be integer or boolean.
+$\lambda_D$ types can be dependent types and function types.
+The predicate $p$ is
+not yet defined. As we noted earlier, if $p$ contains arbitrary program 
+expressions, the type system is undecidable.
+In dependent function types we use a variable to bind the argument, 
+as it can be used in the type of the result.
+
+Finally, we define a typing environment $\Gamma$, that maps variables to their type.
+
+\mypara{Static Typing}
+
+There are three types of judgments:
+\begin{itemize}
+\item{\emphbf{Wellformedness judgments} (\isWellFormed{\Gamma}{\tau})} 
+state that a type $\tau$ is well-formed under environment
+$\Gamma$, that is, the refinements in $\tau$ are boolean 
+expressions in the environment $\Gamma$.
+
+\item{\emphbf{Subtyping judgments} (\isSubType{\Gamma}{\tau_1}{\tau_2})} 
+state that the type $\tau_1$ is a subtype of the type
+$\tau_2$ under environment $\Gamma$, that is, when the free variables
+of $\tau_1$ and $\tau_2$
+are bound to values described by $\Gamma$, the set of values described
+by $\tau_1$ is contained in the set of values described by $\tau_2$. 
+
+
+\item{\emphbf{Typing judgments} (\hastype{\Gamma}{e}{\tau})} state that
+the expression $e$ has the type $\tau$ under environment $\Gamma$,
+that is, when the free variables in $e$ are bound to values described by 
+$\Gamma$, the expression $e$ will evaluate to a value described by $\tau$.
+\end{itemize}
+
+\mypara{Wellformedness Rules}
+The wellformedness rules check that the 
+refinements are indeed $\tbbool$-valued expressions in the 
+appropriate environment.
+The rule \wtBase checks, as usual, that the  
+refinement $\reft$ is boolean.
+The rule \wtFun recursively applies the well formness rule to
+the argument type of the function, and to the result type, 
+after it adds the argument binder with the correct type to 
+the environment.
+
+\mypara{Subtyping Rules}
+The subtyping rules stipulate when the set of values described 
+by type $\tau_1$ is subsumed by the values described by $\tau_2$.
+%
+The rule \tsubBase surves two purposes:
+\begin{itemize}
+\item checks that the basic type is the same in the two types, 
+as in vanilla type systems
+\item checks that under the environment $\Gamma$, 
+the left hand side refinement implies the right hand side.
+To do so, we use a $Valid$ which varies between the systems that we will describe.
+\end{itemize}
+The rule \tsubFun relates two function types according to the contravariant rule.
+
+\mypara{Type Checking Rules}
+The type checking rules check that an expression in of the correct type.
+The rule \tsub states that if an expression is of type $\tau$, 
+then it can be types as any supertype of $\tau$.
+The rule \tconst checks the types of the constant expressions, according 
+to their definitions.
+The rule \tvar checks the types of the variables, according 
+to the environment $\Gamma$.
+The rule \tfun checks the types of the variables, according 
+to the environment $\Gamma$.
+The rule \tfunction checks that the type of the function-body
+is correct in the environment, exteended with the argument of the function.
+Also, checkes that the type of the argument is well formed. 
+The rule \tapp checks that \textbf{mplamplma}.
+
+
+\begin{figure}[t!]
+\centering
+$$
+\begin{array}{rrcl}
+\emphbf{Expressions} \quad 
+  & e 
+  & ::= 
+  &      x 
+  \spmid c 
+  \spmid \efunt{x}{\tau}{e} 
+  \spmid \eapp{e}{e} 
+%  \spmid \etabs{\alpha}{e} 
+%  \spmid \etapp{e}{\tau} 
+  \\[0.05in] 
+
+\emphbf{Predicates} \quad 
+  & p
+  & ::= 
+  & \dots
+  \\[0.05in] 
+
+\emphbf{Basic Types} \quad 
+  & b 
+  & ::= 
+  &      \tbint
+  \spmid \tbbool
+%  \spmid \alpha
+  \\[0.05in]
+
+\emphbf{Dependent Types} \quad 
+  & \tau 
+  & ::= 
+  &      \tref{b}{p} 
+  \spmid \tfun{x}{\tau}{\tau}
+  \\[0.05in]
+
+\emphbf{Typing Environment} \quad 
+  & \Gamma 
+  & ::= 
+  &      \emptyset 
+  \spmid x:\tau, \Gamma
+
+\end{array}
+$$
+\caption{\textbf{Syntax of Expressions, Types and Schemas}}
+\label{fig:syntax}
+\end{figure}
+
+
+\begin{figure}[ht!]
+\judgementHead{Well-Formedness}{\isWellFormed{\Gamma}{\tau}}
+
+
+$$\inference
+    {\hastype{\Gamma, p:b}{\reft}{\tbbool}}
+    {\isWellFormed{\Gamma}{\tref{b}{p}}}
+    [\wtBase]
+$$
+
+$$
+\inference
+    {
+    \isWellFormed{\Gamma}{\tau_x} &&
+	\isWellFormed{\Gamma, x:\tau_x}{\tau}
+    }
+    {\isWellFormed{\Gamma}{\tfun{x}{\tau_x}{\tau}}}
+    [\wtFun]
+$$
+
+
+\medskip \judgementHead{Subtyping}{\isSubType{\Gamma}{\tau_1}{\tau_2}}
+
+$$
+\inference
+   {\text{Valid}(\Gamma, p1, p2)}
+   {\isSubType{\Gamma}{\tref{b}{p_1}}{\tref{b}{p_2}}}
+   [\tsubBase]
+$$
+
+$$
+\inference
+   {\isSubType{\Gamma}{\tau_2}{\tau_1} &
+	\isSubType{\Gamma, x_2:{\tau_2}}{\SUBST{\tau_1'}{x_1}{x_2}}{\tau_2'}	
+   }
+   {\isSubType{\Gamma}
+	  {\tfun{x_1}{\tau_1}{\tau_1'}}
+	  {\tfun{x_2}{\tau_2}{\tau_2'}}
+}[\tsubFun]
+$$
+
+
+\medskip \judgementHead{Type Checking}{$\hastype{\Gamma}{e}{\tau}$}
+
+$$\begin{array}{cc}
+
+\inference
+  {  \hastype{\Gamma}{e}{\tau_2} && \isSubType{\Gamma}{\tau_2}{\tau_1} 
+  && \isWellFormed{\Gamma}{\tau_1}
+  }
+  {\hastype{\Gamma}{e}{\tau_1}}
+  [\tsub]
+\end{array}$$
+
+$$\begin{array}{cc}
+
+\inference
+  {}
+  {\hastype{\Gamma}{c}{\tc{c}}}
+  [\tconst]
+&
+\inference
+  {x:\tau \in \Gamma}
+  {\hastype{\Gamma}{x}{\tau}} 
+  [\tvariable]
+
+\end{array}$$
+
+$$\begin{array}{cc}
+
+\inference
+  {\hastype{\Gamma, x:\tau_x}{e}{\tau} &&     
+  \isWellFormed{\Gamma}{\tau_x}
+  }
+  {\hastype{\Gamma}{\efunt{x}{\tau_x}{e}}{\tfun{x}{\tau_x}{\tau}}}
+  [\tfunction]
+&
+\inference
+  {\hastype{\Gamma}{e_1}{\tfun{x}{\tau_x}{\tau}} &&
+   \hastype{\Gamma}{e_2}{\tau_x}
+  }
+  {\hastype{\Gamma}{\eapp{e_1}{e_2}}{\tau[e_2/x]}} 
+  [\tapp]
+
+\end{array}$$
+
+\caption{\textbf{Static Semantics: Well-formedness, Subtyping and Type Checking}}
+\label{fig:rules}
+\end{figure}
+

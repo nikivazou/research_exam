@@ -1,0 +1,94 @@
+%\documentclass{llncs}
+\documentclass[runningheads,a4paper]{article}
+%%% \usepackage[top=1.5cm,bottom=1.5cm,left=2.3cm,right=2cm]{geometry}
+
+\pagestyle{plain}
+\usepackage{times}
+%\usepackage[nocompress]{cite} % AR: comment this out if you wish hyperrefs 
+
+\usepackage{amsmath,amssymb, latexsym}
+
+\usepackage[latin1]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+
+\usepackage{liquidHaskell}
+\usepackage[inference]{semantic}
+
+%\usepackage{subfigure}
+%\usepackage{graphicx}
+%\usepackage[usenames,dvipsnames]{color}
+\usepackage{enumerate}
+\def\url{}
+\usepackage{xspace}
+\usepackage{epsfig}
+\usepackage{mathpartir}
+\usepackage{booktabs}
+
+%\usepackage{extarrows}
+%\usepackage{pgf,tikz}
+%\usetikzlibrary{arrows,automata}
+
+\usepackage{ifthen}
+
+\newcommand{\isTechReport}{false} % true or false
+\newcommand{\includeProof}[1]{
+  \ifthenelse{\equal{\isTechReport}{true}}{
+    #1
+  }{
+  }
+}
+
+
+
+%%%%%\usepackage{fancyvrb}
+%%%%%\DefineVerbatimEnvironment{code}{Verbatim}{fontsize=\small}
+%%%%%\DefineVerbatimEnvironment{example}{Verbatim}{fontsize=\small}
+%%%%%\newcommand{\ignore}[1]{}
+
+% command to end a proof or definition:
+%\def\qed{\rule{0.4em}{1.4ex}}
+\def\qed{\hfill$\Box$}
+
+% space at the beginning of an environment:
+\def\@envspa{\hspace{0.3em}}
+\def\@sa{\hspace{-0.2em}}
+\def\@sb{\hspace{0.5em}}
+\def\@sc{\hspace{-0.1em}}
+
+\def\sk{\smallskip}		% space before and after theorems
+
+\newtheorem{notation}{Notation}{\itshape}{}
+\newtheorem{invariant}{Invariant}
+
+\input{commands}
+\input{haskellListings}
+
+\sloppy
+
+\title{Research Exam} 
+
+\author{
+  Niki Vazou
+}
+
+\begin{document}
+\maketitle
+
+\input{dependent}
+\input{undecidable}
+\input{liquid}
+\input{abstract_refinements}
+%\input{hybrid}
+%\input{refinements}
+%\input{abstract}
+%\input{haskell}
+%\input{conclusion}
+
+%{
+%\bibliographystyle{plain}
+%\bibliography{sw}
+%}
+
+\end{document}

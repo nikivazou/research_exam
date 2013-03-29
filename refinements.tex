@@ -1,0 +1,101 @@
+\section{Static Typing --- Decidable Systems}
+
+\begin{itemize}
+\item What is a refinement type \cite{FreemanPfenning91}
+
+\item Describing indexed types --- array bound checking \cite{pfenningxi98}
+\end{itemize}
+
+
+
+\subsection{Liquid Types \cite{LiquidPLDI08}}
+\begin{itemize}
+\item predicate abstraction \cite{AM78, millstein06}
+\item algorithmic dependent type inference
+\item path sensitivity
+\end{itemize}
+
+
+\subsection{Parametric Invariants}\label{subsec:refinements:parametric}
+
+\mypara{Parametric Invariants via Type Polymorphism}
+Suppose we had
+a generic comparison operator of type @(<=) :: a -> a -> Bool@,
+as is the case in \textsc{OCaml}.
+We could use it to write functions 
+$$\centering\begin{tabular}{c}\begin{code}
+max     :: a -> a -> a
+max x y = if x <= y then y else x 
+
+maximum :: [a] -> a
+maximum (x:xs) = foldr max x xs
+\end{code}\end{tabular}$$
+In essence, the type given for @maximum@ states that
+\emph{for any} @a@, if a list of @a@ values is passed
+into @maximum@, then the returned result is also an @a@
+value.
+%
+Hence, for example, if a list of \emph{prime} numbers 
+is passed in, the result is prime, and if a list of 
+\emph{even} numbers is passed in, the result is even. 
+Thus, we can use refinement types \cite{LiquidPLDI08} 
+to verify
+%
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+type Even = {v:Int | v % 2 = 0 }
+
+maxEvens :: [Int] -> Even
+maxEvens xs = maximum (0 : xs') 
+  where xs' = [ x | x <- xs, x `mod` 2 = 0]
+\end{code}
+\end{tabular}$$
+Here the @%@ represents the modulus operator in the refinement logic
+\cite{z3} and we type the primitive {@mod :: x:Int -> y:Int -> {v: Int | v = x % y}@}.
+Verification proceeds as follows.
+Given that {@xs :: [Int]@}, the system has to verify that
+{@maximum (0 : xs') :: Even@}.
+%
+To this end, the type parameter of @maximum@ is instantiated with the 
+\emph{refined} type @Even@, yielding the instance:
+%
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+maximum :: [Even] -> Even
+\end{code}
+\end{tabular}$$
+%
+Then, @maximum@'s argument should be proved to have type
+{@[Even]@}.
+So, the type parameter of @(:)@ 
+is instantiated with {@Even@}, yielding the instance: 
+%
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+(:) :: Even -> [Even] -> [Even]
+\end{code}
+\end{tabular}$$
+%
+Finally, the system infers that {@0 :: Even@} and {@xs' :: [Even]@}, 
+\ie the arguments of {@(:)@} have the expected types, thereby verifying
+the program.
+%
+The refined type instantiations can be \emph{automatically} inferred,
+using the abstract interpretation framework of Liquid
+Types~\cite{LiquidPLDI08}, 
+with the appropriate set of qualifiers $\mathbb{Q}^\star$,
+thereby making the above verification fully automated.
+
+Thus, classical type parameters offer an easy means of encoding 
+second-order invariants, \ie of quantifying over or parametrizing 
+the invariants of inputs and outputs of functions, without sacrificing
+automatic verification.
+
+
+
+
+\subsection{Recursive - Polymorphic types \cite{LiquidPLDI09}}
+
