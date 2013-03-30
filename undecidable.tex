@@ -1,3 +1,4 @@
+
 \newcommand\tlabel{T-Label}
 \newcommand\tcast{T-Cast}
 
@@ -54,13 +55,13 @@ its argument is positive.
 In more details @pred@ function can be defined in Coq as follows \cite{cpdt}  
 $$\centering
 \begin{tabular}{c}
-\begin{code}
+\begin{codeCoq}
 Definition pred (s : {n : nat | n > 0}) : {m : nat | proj1_sig s = S m} :=
   match s return {m : nat | proj1_sig s = S m} with
     | exist 0 pf => match zgtz pf with end
     | exist (S n') pf => exist _ n' (eq_refl (S n'))
   end.
-\end{code}
+\end{codeCoq}
 \end{tabular}
 $$
 
@@ -69,12 +70,12 @@ defined in the standard library, for the type family @sig@:
 
 $$\centering
 \begin{tabular}{c}
-\begin{code}
+\begin{codeCoq}
 Inductive sig (A : Type) (P : A -> Prop) : Type :=
     exist : forall x : A, P x -> sig P
 Notation
   "{ x : A | P }" := sig (fun x : A => P)
-\end{code}
+\end{codeCoq}
 \end{tabular}
 $$
 
