@@ -12,70 +12,84 @@
 
 
 
-\section{Undecidable}
+\section{Interactive theorem Proving}
 
-In our language $\lambda_D$ we presented a dependent type system, 
-but we did not provide any means of reasoning 
+% intro
 
-Say for example that we know that 
+One approach to verify that a program satisfies some 
+specifications is to statically prove them.
+% 
+This approach is used by \textit{interactive theorem provers}, 
+such as Coq, Agda and Isabelle,
+that allow the 
+expression of mathematical assertions, 
+mechanically check proofs of these assertions, 
+help to find formal proofs, 
+and extract a certified program from 
+the constructive proof of its formal specification.
 
-$$
-pred :: n:{v:Int | v > 0} -> {v:Int | v = n - 1}
-$$
+% overview 
 
-We will describe three usual ways to reaons this
+As an example, consider a function @pred@ in Coq, 
+that computes the predecessor of a positive number,
+and has type signature
 
+@pred :: s:{n : nat | n > 0}  -> {v:nat | s = S v}@
+
+This type signature says that if @pred@ is called with a 
+positive number @s@, it will return @s@'s predecessors. 
+There are two different assertions that should be proved:
 \begin{itemize}
-\item Interactive theorem proving
-\item Casting
-\item Algorithmic Type Checking
+\item The result of the function is the predecessor of the argument.
+At @pred@'s definitions the programmer should provide a proof
+that this assertion is indeed satisfied.
+\item The argument is a positive number.
+At each call side of @pred@, 
+the user should provide a proof that 
+its argument is positive.
 \end{itemize}
 
-\subsection{Interactive theorem Proving}
+% implementation
 
-Many systems, such as Coq, Agda and Isabelle, ask uses to provide such proofs.
-Consider Coq, 
-We can write a function pred with the type signature
-
-$$
-pred :: s:{n : nat | n > 0 }  -> {v:nat | s = S v}
-$$
-
-There are two doefferent prooves assotiated with this signature
-\begin{itemize}
-\item For a function to typecheck against this signsture, 
-inside of its body the programmer should construct a proof that the 
-result satisfies the type
-\item At each call side, the user should provide a proof that 
-the argument passed in the function is positive
-\end{itemize}
-
-In more details, in Coq, refinements types are
-implemented using the type family "sig", as defined in the standar library:
-
-\begin{verbatim}
-Inductive sig (A : Type) (P : A -> Prop) : Type :=
-    exist : forall x : A, P x -> sig P
-\end{verbatim}
-
-and uses the notation
-
-\begin{verbatim}
-Notation
-  "{ x : A | P }" := sig (fun x : A => P)
-\end{verbatim}    
-    
-    
-The definition of pred function is
-
-\begin{verbatim}
+In more details @pred@ function can be defined in Coq as follows \cite{cpdt}  
+$$\centering
+\begin{tabular}{c}
+\begin{code}
 Definition pred (s : {n : nat | n > 0}) : {m : nat | proj1_sig s = S m} :=
   match s return {m : nat | proj1_sig s = S m} with
     | exist 0 pf => match zgtz pf with end
-    | exist (S n') pf => exist _ n' (eq_refl _)
+    | exist (S n') pf => exist _ n' (eq_refl (S n'))
   end.
-\end{verbatim}
+\end{code}
+\end{tabular}
+$$
 
+where the refinement type is syntactic sugar,
+defined in the standard library, for the type family @sig@:
+
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+Inductive sig (A : Type) (P : A -> Prop) : Type :=
+    exist : forall x : A, P x -> sig P
+Notation
+  "{ x : A | P }" := sig (fun x : A => P)
+\end{code}
+\end{tabular}
+$$
+
+The function @pred@ takes an argument @s@ which has two components:
+a natural number @n@
+and a proof @pf@ that this number is positive.
+Then, there is a case analysis on @s@ and if @n@ is zero, then 
+the proof @pf@ is used to reach a contradiction; thus this case can not occur.
+Otherwise, @n@ has a predecessor, say @n'@ and 
+the function returns @n'@ combined with a proof that its successor is 
+equal to @n@. This proof is constructed by applying @eq_relf@, the only constructor
+of equality to @S n'@.
+
+
+\begin{comment}
 where zgtz
 
 \begin{verbatim}
@@ -86,16 +100,34 @@ Qed.
 Inductive eq (A:Type) (x:A) : A -> Prop :=
     eq_refl : x = x :>A
 \end{verbatim}
+\end{comment}
 
-The argument is a number n and a proof that it is greater
-than zero.
-So, when it is matched with 0, we use this proof to derive a contradiction.
-When it is much to $(S n')$ we use the $eq_refl$ constructor of equality to 
-create a proof n' is the predecessor of n.
+As we said, at the call side of @pred@, the programmer should provide
+both the argument and a proof that it is positive.
+As an example, we can have 
 
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+pred (exist _ 2 two_gt0)
+\end{code}
+\end{tabular}
+$$
+ 
+where @two_gt0@ is a proof that two is greater than zero.
 
-Even this example seems tedious, using interactive theorem prooving can be simplified
-using inference and tacticks. Though, the user needs still to provide proofs.
+\begin{comment}
+Theorem two_gt0 : 2 > 0.
+  crush.
+Qed.
+\end{comment}
+
+Even this example seems tedious, 
+interactive theorem prooving can be simplified
+using inference and tacticks. 
+%
+Though, the user still needs to provide proofs.
+%
 We will discuss other systems, which remove this burden from the user.
 
 \subsection{Manifest Contracts}
