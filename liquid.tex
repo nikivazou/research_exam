@@ -4,19 +4,20 @@
 
 
 In this section we will present a dependent type system which is decidable.
-As we stated in the introduction, if the refinement of a type can be an arbitrary 
-program expression, then type checking is undecidable.
+As we stated in the introduction, if the refinement language can contain arbitrary 
+program expressions, then type checking is undecidable.
 %
-In Liquid Types Rondon et all restricted the refinement logic according to a predetermined 
+In Liquid Types\cite{LiquidPLDI08},  Rondon et all restricted the refinement logic according to a predetermined 
 finite set of qualifiers,  which gives not only decidable type checking, but also automatic
 type inference.
 
 
 
-The system takes as input a program and a set of logical qualifiers
-which are simple boolean predicates over the program variables, a
-special value variable @v@, and a special placeholder variable ?$\star$ that
-can be instantiated with program variables. The system then infers
+The system takes as input a program and 
+a finite set of \textit{logical qualifiers}
+which are simple boolean predicates 
+that encode the properties we care to verify. 
+The system then infers
 liquid types, which are dependent types where the refinement predicates are conjunctions of the logical qualifiers.
 In the system, type checking and inference are decidable for
 three reasons. 
@@ -45,7 +46,7 @@ the special value variable @v@ which is distinct from the
 program variables, and the special placeholder variable $\star$ that
 can be instantiated with program variables. 
 We can assume, that $\mathcal{Q}$ is the set of logical qualifiers
-$\{0 \leq v, \star \leq v, v < \star,  v = \star + 1, v < len \star\}$. 
+$\{0 \leq v, \star \leq v, v < \star,  v = \star + 1\}$. 
 %
 We say that
 a qualifier q matches the qualifier $q'$
@@ -56,97 +57,119 @@ $x \leq v$ matches the qualifier $\star \leq v$.
 We write $\mathcal{Q}^\star$
 for the set of all
 qualifiers not containing $\star$ that match some qualifier in \qset. 
-For example, when \qset is as defined as above, $\qset^\star$
+For example, when \qset is as defined as above, 
+and $x$, $y$ and $n$ are program variables.
+$\qset^\star$
 includes the qualifiers
-$\{0 \leq v, x \leq v, y \leq v, v = n + 1, k \leq v, v <n, v < len a \}$. 
+$\{0 \leq v, x \leq v, y \leq v, v = n + 1, v <n\}$. 
 A liquid type over \qset is a dependent type where the refinement predicates are
 conjunctions of qualifiers from $\qset ^ \star$.
 
+\subsection{Overview}
+\subsubsection{Type Inference}
 
 As an example consider our pred example
-
-\begin{verbatim}
+$$\centering
+\begin{tabular}{c}
+\begin{code}
 pred n = n - 1
-\end{verbatim}
-
-(Step 1) HM infers that pred has the type $Int -> Int$.
-Using this type, we create a template for the liquid type of pred,
+\end{code}
+\end{tabular}
 $$
+
+The liquid type for @pred@ can be inferred in three steps:
+
+(Step 1) By Hindley-Milner algorithm, 
+we can infer that @pred@ has the type @Int -> Int@.
+Using this type, we create a template for the liquid type of @pred@,
+
+$$\centering
+\begin{tabular}{c}
+\begin{code}
 pred :: n:{v:Int | k_n} -> {v:Int | k_p}
+\end{code}
+\end{tabular}
 $$
 
-where $k_n$ and $k_p$
-are liquid type variables representing the unknown refinements for the formals n
- and the body of pred, respectively.
+where @k_n@ and @k_p@
+are liquid type variables representing the unknown refinements for the 
+argument n and the body of @pred@, respectively.
 
 
-(step 2)
-
-If moreover we assume:
-$$
-(-) :: x:Int -> y:Int -> {v:Int | v = x - y}\\ 
-1 :: {v:Int | v = 1}
-$$
-
-Then in an environment with 
-
-$$
-n:{v:Int | k_1}
-$$
-we have that if 
-
-$$
-{v:Int | k_1} <: Int
-{v:Int | v = 1} <: Int
-$$
-then 
-$$
-n - 1 :: {v:Int | v = n - 1} <: {v:Int | k_2}
+(Step 2)If moreover we assume:
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+(-) :: x:Int -> y:Int -> {v:Int | v = x - y}
+\end{code}
+\end{tabular}
 $$
 
-So, we get the subtyping constraint 
-
+The the result of @pred@ has a type
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+{v:Int | v = x - y}[x/n][y/1] = {v:Int | v = n - 1} 
+\end{code}
+\end{tabular}
 $$
-{v:Int | v = n - 1} <: {v:Int | k_2}
+
+But this should be subtype of the template type for the result.
+So, we get the subtyping constraint
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+n - 1 :: {v:Int | v = n - 1} <: {v:Int | k_p}
+\end{code}
+\end{tabular}
 $$
 
 which reduces to the implication constraint 
 
 $$
-v = n - 1 \Rightarrow k_2
+v = n - 1 \Rightarrow k\_p
 $$
 
-(step 3)
-Since the program is ``open'', i.e., there are no calls to pred,
-we assign $k_n$ true, meaning that any integer arguments can be
+(Step 3)Since the program is ``open'', i.e., there are no calls to @pred@,
+we assign @k_p@ true, meaning that any integer arguments can be
 passed, and use a theorem prover to find the strongest conjunction
 of qualifiers in \qset
 that satisfies the subtyping constraints. 
 The algorithm
-infers that $v = n-1$ is the strongest solution for $k_p$.
-By substituting the solution for $k_p$ into
-the template for pred, our algorithm infers
-$pred :: n:int -> \{v :Int | v = n-1 \}$
-
-
-\subsection*{Contraining the argument}
-As one may notice the type signature of pred does not constrain the type of the argument.
-This happens because the code for pred produces no such consraint.
-We could manually specify a type for pred
-
+infers that $v = n-1$ is the strongest solution for @k_p@.
+By substituting the solution for @k_p@ into
+the template for @pred@, our algorithm infers
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+pred :: n:Int -> {v:Int | v = n-1}
+\end{code}
+\end{tabular}
 $$
+
+
+\subsubsection{Type Checking}
+As one may notice the inferred type signature of @pred@ does not constrain the type of the argument.
+This happens because the code for pred produces no such constraint.
+We could manually specify a type for @pred@
+
+$$\centering
+\begin{tabular}{c}
+\begin{code}
 pred :: n:{v:Int | v > 0} -> {v:Int | n - 1}
+\end{code}
+\end{tabular}
 $$
 
-Then then first step of the infrence will be skipped and the 
-body of the function will be type checked against the given signature.
+Then then first step of the inference will be skipped and the 
+body of the function will be type-checked against the given signature.
 
 So, in the second step, as before, we will create an implication
 $$n-1 \Rightarrow n - 1 $$. That can trivially be verified in the third step.
 
-If we have use the above type signature and we call pred with some in, say 42
-then in the call site the constraint $v = 42 \Rightarrow v >0$ will be generated, that can easily
-be verified.
+We have use the above type signature and we call @pred@ with some integer vale, say @2@
+then in the call site the constraint $v = 2 \Rightarrow v >0$ will be generated, 
+that can easily be verified.
 %
 On the other hand, if we call it with zero, we will get the constraint
 $v = 0 \Rightarrow v >0$, that does not hold, 
@@ -161,33 +184,36 @@ to enable static verification of complex data structures. For example they prove
 that a list is sorted or that a tree is a Binary Search Tree.
 %
 Liquid Types can be used to verify properties even in imperative languages.
-In \cite{Rondon10} they present a refinement type system for
+In \cite{Rondon10}, Rondon et. all. present a refinement type system for
 C based on Liquid Types to verify memory safety properties, 
 like the absence of array bounds violations
 and null-dereferences.
-In \cite{Kawaguchi12}
-they present Liquid Effects, a type-and-effect system based on refinement types
+In \cite{Kawaguchi12},
+Kawaguchi et. all. present Liquid Effects, a type-and-effect system based on refinement types
 which allows for fine-grained, low-level, shared memory multithreading while statically guaranteeing that a program is deterministic. 
 
 \subsection{Formal Language}
+Once again, we would like to extend $\lambda_c$ such as to support liquid type checking.
 
 As we said earlier, the refinements in the language 
 can not contain arbitrary expressions, but they are limited
 to conjuctions of the logical qualifiers, which form a finite set.
+
 They use a subtyping relation similar to 
-hybrid type checking, but since their refinemet language is restricted, 
-the subtyping relation is decidable.
+hybrid type checking, 
+but in this setting,  
+the subtyping relation is decidable
+because their refinement language is restricted.
 
 \begin{figure}[t!]
 \centering
 $$
 \begin{array}{rrcl}
-\emphbf{Predicates} \quad 
-  & p
-  & 		\text{true}
+\emphbf{Predicates} \quad
+  & p ::=
+  & 	\text{true}
   \spmid q
-  \spmid p \land p
-  & \dots
+  \spmid p \land p \ , \ q \in \mathbb{Q^\star}
   \\[0.05in] 
 \end{array}
 $$

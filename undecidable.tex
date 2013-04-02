@@ -12,9 +12,22 @@
 
 \newcommand\isCompatible[2]{\ensuremath{ #1 \Vert #2 }}
 
+\section{Undecidable Systems}
+
+As we said, if the refinement language can have arbitrary program expressions,
+we can not statically prove the soundness of a program. 
+%
+In this section we will present three ways to reason about such languages:
+\begin{itemize}
+\item Interactive theorem proving; where the proofs are statically created by the user
+\item Contracts Calculi; where the assertions are checked at run time
+\item Hybrid Type Checking; where the assertions are checked statically whenever possible
+and dynamically when necessary.
+\end{itemize}
 
 
-\section{Interactive theorem Proving}
+
+\subsection{Interactive theorem Proving}
 
 % intro
 
@@ -298,10 +311,7 @@ Now, when we apply a positive number, say $2 :: \{v:Int | v > 0\}$, we will have
 
 Thus, if \texttt{pred'} was not returning the correct value, the program would raise a blame:
 \begin{align*}
-& \texttt{pred'}\ x= 0 \\
-\end{align*}
-
-\begin{align*}
+\texttt{pred'}\ & x= 0 \\
 \texttt{pred}\ 2 &=
 (\ecast{Int \rightarrow Int}{x:\{v:Int | v > 0\} -> \{v:Int | v = x - 1\}}{lpred} \ \texttt{pred'})\ 2 \\
 &\rightarrow^\star (\ecast{Int}{\{v:Int | v = 2 - 1\}}{lpred}) \ (\texttt{pred'}\ (\ecast{\{v:Int | v > 0\}}{Int}{lpred} \ 2)) \\ 
@@ -329,7 +339,8 @@ then this cast will fail:
 
 
 \subsubsection{Formal Language}
-Lets now extend our core calculus, so that it supports manifest contracts.
+Lets now extend our core calculus $\lambda_c$ to $\lambda_cc$,
+so that it supports manifest contracts.
 %
 In the expressions of our language we should add a blaming expression
 and a type casting.
@@ -415,80 +426,78 @@ $$\begin{array}{cc}
 \end{figure}
 
 
+\subsection{Hybrid Type Checking}
 
-
-\subsection{Algorithmic Type Checking}
-
-The great disadvantage of $\lambda^{\textsc{CON}}$ is that all contracts are checked in runtime, 
+The great disadvantage of contract calculi is that all contracts are checked in runtime, 
 so type checking consumes cycles that otherwise would perform useful computation.
 Moreover limited coverage is provided: contracts are checked only for data values and
 code paths of actual execution.
-This disadvantages are eliminated in Flanagan's Hybrid Type Checking \cite{Flanagan06}.
-In their system, $\lambda^H$, they encoded contracts as dependent types:
+This disadvantages are eliminated in Flanagan's Hybrid Type Checking \cite{flanagan06}.
+%
+
+Instead of type casting, Flanagan used subtyping to convert values from one type to another.
+So, if we want to prove that $2$ is a positive number, we have to prove that 
+the following subtyping holds:
+$$\{v:Int | v = 2\} <: \{v:Int | v > 0\}$$
+This, in turn reduces to implication checking:
+$$ v = 2 \Rightarrow v > 0$$
+which is easy to prove with some algorithm that uses linear arithmetic.
+%So, in this system, $2$ can be applied to our \texttt{pred} function without a type cast.
 
 
-Instead of type casting they used subtyping to convert values from one type to another.
-Which in turn reduces to implication checking.
-Their type system checks implications statically, whenever possible
-and dynamically, only when necessary:
-
-
-Consider our pred example::
-
-\begin{verbatim}
-pred :: x:{v : Int | v > 0} -> {v:Int | v = x - 1}
-pred x = x - 1
-\end{verbatim}
-
-Say that we apply this function to the integer 8
-and we can assume that  for all integers ty(n) = {v:Int | v = n}.
-
-For this application to typecheck, we should prove that 
-$$ {v:Int | v = 8} <: {v : Int | v > 0} $$
-which reduces to 
-$$ v = 8 \Rightarrow v > 0 $$
-which is easy to prove by any algorithm that uses linear arithmentic.
-
-But this reasining may create implications harder to prove.
-
-They assume that 
+Flanagan's type system checks implications statically, whenever possible
+and dynamically, only when necessary.
+He assumes that 
 there exists an algorithm that within limited time can
 conservatively approximate implications between predicates.
-They apply this algorithm to each implication and there are three cases:
+Say that we know that %in an environment $\Gamma$, 
+$e :: \tau_s$ and we want to prove that $e :: \tau_t$, 
+then we have to prove that the source type is subtype of the target, 
+or $\tau_s\preceq \tau_t$. 
+Subtyping is reduced to implication checking, thus implications of the form
+$e_s \Rightarrow e_t$ are created.
+Then,
+we apply the algorithm to each implication and there are three cases:
 \begin{itemize}
-\item The algorithm proves that $E \vdash s \Rightarrow t$, this the relates contract
-will always succeed.
-\item The algorithm proves that $E \nvdash s \Rightarrow t$, this the relates contract
-will always fails and the program is rejected..
+\item The algorithm proves that all implications hold, 
+ $\vdash e_s \Rightarrow e_t$, 
+which implies that $\tau_s\preceq \tau_t$ always holds.
+\item The algorithm proves that some implication does not hold, 
+$\nvdash e_s \Rightarrow e_t$, 
+which implies that the subtyping does not hold %the related contract
+%will always fail 
+and the program is rejected as unsafe.
 \item The algorithm can not prove any of the above.
-Thus, the expression is annotated with a type cast $\langle T_e \vartriangleright T_f\rangle e$
-to dynamically ensure that values returned by $e$ are actually of the desired type $T_f$.
+Thus, the expression $e$ is annotated with a type cast \ecast{\tau_s}{\tau_t}{}
+to dynamically ensure that values returned by $e$ are actually of the desired type $\tau_t$.
 \end{itemize}
 
-So actually they trnsform the program to add all required type casts, but they prove that
-the original and the transformed program are ``bisimilar'', ie they behave equivallent with respect to 
-operational semantics.
+So the program is transformed to include all required type casts, 
+i.e., the ones that can not be statically proved.
 
-Finally he proves that for any static type checker S, it is possible to 
-develop a hybrid type checker H
-that performs somewhat better than S in the following sense:
-\begin{itemize}
-\item H dynamically detects errors that would be missed by S, since
-H supports more precise specifications than S and can detect
-violations of these specifications dynamically.
-\item H statically detects all errors that would be detected by S, since
-H can statically perform the same reasoning as S.
-\item H actually detects more errors statically than S, since H sup-
-ports more precise specifications, and could reasonably detect
-some violations of these precise specifications statically.
-\end{itemize}
+
+Compared to manifest contacts, Hybrid type system has two advantages:
+First, type casts are automatically created, thus the annotation burden is lower for
+the programmer.
+Moreover, whenever possible, subtyping is statically checked, which leads to both
+limiting the run-time checks and broader coverage of the contract checks.
 
 \subsubsection{Formal Language}
-
-The syntax of $\lambda_H$ is the same as $\lambda_C$, we only add the substyping rules.
-As we stated, the source program goes through a transformation and the nessecary casts are added.
-Thus, every time the \tsub rule is used, it is guaranteened that their algorithm can prove
+We will extend our core language $\lambda_{cc}$ to $\lambda_{ch}$,
+so as to support hybrid type checking. 
+The syntax of the language is not extended, but we need to add the subtyping rules.
+As we stated, the source program goes through a transformation and the necessary casts are added.
+Thus, every time the \tsub rule is used, it is guaranteed that the algorithm can prove
 the subtyping relation.
+
+The rule \tsub says that in any environment $\Gamma$, if $e$ has type $\tau_2$, 
+$\tau_2$ is subtype of $\tau_1$ and $\tau_1$ is well formed, then $e$ has also type $\tau_1$.
+The subtyping relation, reduces subtyping to implication checking.
+For function types, the contravariance rule is used.
+While for base types, the base value $v$ is added to the environment, as a boolean value
+and an implication is created that says that the refinement of the left hand side type
+should imply the refinement of the right hand side type.
+
 
 \begin{figure}[ht!]
 \medskip \judgementHead{Subtyping}{\isSubType{\Gamma}{\tau_1}{\tau_2}}

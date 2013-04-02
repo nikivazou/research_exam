@@ -330,23 +330,3 @@ $$\begin{array}{cc}
 \caption{\textbf{Static Semantics: Well-formedness, Subtyping and Type Checking}}
 \label{fig:rules}
 \end{figure}
-
-\section{Undecidable}
-
-In our language $\lambda_D$ we presented a dependent type system, 
-but we did not provide any means of reasoning 
-
-Say for example that we know that 
-
-$$
-pred :: n:{v:Int | v > 0} -> {v:Int | v = n - 1}
-$$
-
-We will describe three usual ways to reaons this
-
-\begin{itemize}
-\item Interactive theorem proving
-\item Casting
-\item Algorithmic Type Checking
-\end{itemize}
-
