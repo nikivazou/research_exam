@@ -1,3 +1,4 @@
+\newcommand\trefc[4]{\ensuremath{\langle\{#1 : #2  \mid #3 \}\rangle^{#4}}}
 
 \newcommand\tlabel{T-Label}
 \newcommand\tcast{T-Cast}
@@ -7,7 +8,7 @@
 
 
 \newcommand\elabel[1]{\ensuremath{\Uparrow \ #1}}
-\newcommand\ecast[2]{\ensuremath{\langle #1 \Rightarrow #2 \rangle}}
+\newcommand\ecast[3]{\ensuremath{\langle #1 \Rightarrow #2 \rangle^{#3}}}
 
 \newcommand\isCompatible[2]{\ensuremath{ #1 \Vert #2 }}
 
@@ -131,113 +132,205 @@ Though, the user still needs to provide proofs.
 %
 We will discuss other systems, which remove this burden from the user.
 
-\subsection{Manifest Contracts}
+\subsection{Contracts}
 
-\subsubsection{Contracts}
-Contracts are dynamically enforced pre- and post assertions.
-and they play an important role in the construction of robust soft- 
-ware. 
-Their use in programming languages dates back to the 1970s. 
-Eiffel \cite{Eiffel}, an object-oriented programming language,
+% intro
+
+Another approach to verify that a program satisfies some 
+assertions is dynamically check them.
+% 
+These assertions are called \textit{contracts}, i.e., 
+dynamically enforced pre- and post assertions that
+define formal, precise and verifiable interface specifications 
+for software components.
+%	
+Their use in programming languages dates back to the 1970s; 
+when Eiffel \cite{Eiffel}, an object-oriented programming language,
 totally adopted assertions and developed the 
 ``Design by Contract'' philosophy \cite{Meyer92}.
 
- 
-\paragraph*{Contracts for Higher-Order Functions}
-Findler and Felleisen in \cite{Findler02} were the first to
-integrate contracts in higher order languages.
+Contracts are of the form:
+\trefc{v}{\tau}{p}{l}
+and describe the values $v$, of type $\tau$
+that satisfy the predicate $p$. 
+The $l$ superscript is a \textit{blame label}, used to
+identify the source of failures.
+%
+As an example, 
+consider a contract for positive integers \trefc{v}{Int}{v>0}{l}
+applied to two values, $2$ and $0$: 
+\begin{align*}
+\trefc{v}{Int}{v>0}{l'}&\ 2 &&\rightarrow 2 \\
+\trefc{v}{Int}{v>0}{l}&\ 0  &&\rightarrow \Uparrow l
+\end{align*}
 
+If the check succeeds, as in the case for $2$,
+then the application will return the value, so the first 
+application just returns $2$.
+If it fails, then the entire program will ``blame'' the label $l$,
+raising an uncatchable exception  $\Uparrow l$, pronounced ``blame $l$''.
 
+% higher-order 
+Assigning blame for contractual violations in higher-order languages
+is complex:
+%
+The boundaries between cooperating components are more obscure 
+than in the world with only first-order functions. 
+A function may invoke a function passed to it at its call side.
+Accordingly, the blame for a corresponding contract violation must 
+lie with the supplier of the bad value, 
+no matter if the bad value was passed by directly applying 
+a function or by applying a base value.
+%
 
+In 2002, Findler and Felleisen in \cite{Findler02} were the first to
+to create a system for higher order languages with contracts.
+%
+In their system, the blame is properly assigned in the 
+higher-order components of the program via the 
+``variance-contravariance`` rule.
+% Other features
+Moreover,
+they allow dependent contracts, i.e. 
+contracts that have the form of a dependent function type, 
+where the result can depend on the argument.
+Finally,
+they treat contracts as first class values, 
+i.e., contracts are values that can be passed to and from functions
 
-Findler and Felleisen  created the first type system with contracts, $\lambda^{\textsc{CON}}$ 
-where the expressions are extended with ``obligations'':
-$e^{E, x_1, x_2}$
-The first superscript is a contract expression that the base expression
-is obliged to meet. The last two are variables. The variables enable
-the contract monitoring system to assign blame properly. The first
-variable names the party responsible for values that are produced by
-the expression under the superscript (covariant) and the second variable names
-the party responsible for values that it consumes(contravariant).
+In 2004, Blume and McAllester, at \cite{BlumeM06} noted that 
+in Findler and Felleisen system,
+the concept of contract satisfaction had not actually been defined
+formally, and they proved that their system is indeed
+sound and complete, 
+%
+The contract system is sound if whenever
+the algorithm blames a contract declaration, 
+that contract declaration is actually wrong.
+%
+Conversely, it is complete if blame on a expression is explained
+by the fact that the expression violates one of it contract interfaces.
 
+% Contracts and refinement types 
+Findler and Felleisen's work sparked a great interest
+in contracts, and in the following years a variety
+of related systems have been studied. 
+Broadly, these come in two different sorts. 
+%
+In systems with \textit{latent contracts}, types and contracts
+are orthogonal features. Examples of this style include Findler
+and Felleisen's original system, Hinze et al. \cite{Hinze06}, Blume and
+McAllester \cite{BlumeM06}, Chitil and Huch \cite{ChitilH07}, Guha et al. \cite{GuhaMFK07},
+and Tobin-Hochstadt and Felleisen \cite{Tobin-HochstadtF08}. 
+By contrast, \textit{manifest contracts} are integrated into the type system, 
+which tracks, for each value, the most recently checked contract. 
+Hybrid types \cite{flanagan06} are a well-known example in this style; others include the
+work of Ou et al. \cite{Ou2004}, Wadler and Findler \cite{WadlerF09}, and Gronski
+et al. \cite{Gronski06}, Belo et al. \cite{Greenberg11} and Grennberg et al. \cite{Greenberg12}.
 
-The above two basic characteristics, are summarized in the obligation reduction rules:
+In the next subsection we will discuss manifest contracts and
+how we can extend out core language to support them.
+
+\subsubsection{Manifest Contracts}
+
+Manifest Contracts Systems, as presented in \cite{Greenberg12}, use casts,
+\ecast{\tau_s}{\tau_t}{l}
+to convert values from the source type $\tau_s$ 
+to the target type $\tau_t$ and raise \elabel{l}
+if the cast fails.
+
+As an example, consider a cast from integers to positives:
+
 $$
-V_1^{V_2, p, n} \longrightarrow if \ V_2(V_1) \ then \  V_1  \ else \ blame(``p'')
+\ecast{Int}{\{v:Int | v > 0\}}{l} \ n
 $$
 
+The system should statically verify that the value $n$ is 
+of the source type $Int$.
+After the cast, the program can treat this value as
+if it has the target type $\{v:Int | v > 0\}$.
+At run-time, a check will be made that $n$ 
+is actually a positive integer and if it fails it will raise \elabel{l}.
+
+To generalize, for base contracts, a cast will behave just like a check on the target type: 
+applied to $n$, the cast either returns $n$ or raises \elabel{l} . 
+
+A function cast 
 $$
-V_1^{V_3\longmapsto V_4, p, n} \longrightarrow (V_1 V_2^{V_3, n, p})^{V_4, p, n}
+(\ecast{\tau_{11} \rightarrow \tau_{12}}{\tau_{21} \rightarrow \tau_{22}}{l}
+ \ f ) \ v
+$$
+will reduce to 
+$$
+\ecast{\tau_{12}}{\tau_{22}}{l}\ (f \ ((\ecast{\tau_{21}}{\tau_{11}}{l}) \ v))
 $$
 
-The first rule shows how contracts are checked for first order values, while
-the second rules is the enforcement of the ``even-odd'' rule.
-
-Other features or their system are the two following:
-\begin{itemize}
-\item they allow dependent contracts, ie of the form $int [>0] \rightarrow int [\lambda x \lambda v. v >x]$
-that describes a function that gives a positive integer $x$ it returns a value greater than $x$
-\item they treat contracts as first class values, ie, contracts are values that can be passed to and from functions
-\end{itemize}
-
-
-Soundness and completeness \cite{BlumeM06}
-
-\begin{verbatim}
-Manifest Constracts Systems use casts , <Int => {v:Int | v > 0}> to convert 
-values from one type to another,
-(the left-
-hand side is the source type and the right-hand side is the target type)
-
-For
-base contracts, a cast will behave just like a check on the target type: ap-
-plied to n, the cast either returns n or raises \\l . 
-
-A function cast ( T11 ->
-T12 -> T21 -> T22 l v ) v will reduce to T12 -> T22 l (v ( T21 -> T11 l v )),
 wrapping the argument v in a (contravariant) cast between the domain types
 and wrapping the result of the application in a (covariant) cast between the
 codomain types.
 
-\end{verbatim}
-
+To better understand how function casts work lets go back to 
+our running example, \texttt{pred}:
 
 $$
-pred ::x:{v:Int | v > 0} -> {v:Int | v = x - 1} 
+\texttt{pred} ::n:\{v:Int | v > 0\} -> \{v:Int | v = n - 1\} 
 $$
-\begin{verbatim}
-pred' x = x - 1
-pred = <Int -> Int => x:{v:Int | v > 0} -> {v:Int | v = x - 1}> pred'
-\end{verbatim}
 
-\begin{verbatim}
-pred-> 
-  (<Int -> Int => x:{v:Int | v > 0} -> {v:Int | v = x - 1}>p (\x -> x - 1) ) ->  
-  \y:{v:Int | v > 0} (<Int => {v:Int | v = y-1} >p  ((\x -> x - 1) (<{v:Int | v > 0 }  => Int> y) ) ) 
-  \y:{v:Int | v > 0} (<Int => {v:Int | v = y-1} >p  y-1 ) ) 
-  
-pred 0  -> no type check!
-pred (<Int => {v:Int | v > 0 }u> 0)  -> || u
+To get this type signature for \texttt{pred}, we have to wrap the function's definition 
+in a type cast:
+
+\begin{align*}
+& \texttt{pred'}\ x= x - 1 \\
+& \texttt{pred}  = \ecast{Int \rightarrow Int}{x:\{v:Int | v > 0\} -> \{v:Int | v = x - 1\}}{lpred} \ \texttt{pred'}
+\end{align*}
 
 
-pred (<Int => {v:Int | v > 0 }u> 9)  -> 
-   pred 9 -> 
-  \y:{v:Int | v > 0} (<Int => {v:Int | v = y-1} >  y-1 ) ) 9
-  <Int => {v:Int | v = 9-1} >  9-1 )
-  <Int => {v:Int | v = 8} >  8 )
-  8
+Now, when we apply a positive number, say $2 :: \{v:Int | v > 0\}$, we will have the following computation:
+
+\begin{align*}
+\texttt{pred}\ 2 &=
+(\ecast{Int \rightarrow Int}{x:\{v:Int | v > 0\} -> \{v:Int | v = x - 1\}}{lpred} \ \texttt{pred'})\ 2 \\
+&\rightarrow^\star (\ecast{Int}{\{v:Int | v = 2 - 1\}}{lpred}) \ (\texttt{pred'}\ (\ecast{\{v:Int | v > 0\}}{Int}{lpred} \ 2)) \\ 
+&\rightarrow^\star (\ecast{Int}{\{v:Int | v = 2 - 1\}}{lpred}) \ (\texttt{pred'}\ 2) \\ 
+&\rightarrow^\star (\ecast{Int}{\{v:Int | v = 2 - 1\}}{lpred}) \ 1 \\ 
+&\rightarrow^\star 1 \\ 
+\end{align*}
+
+Thus, if \texttt{pred'} was not returning the correct value, the program would raise a blame:
+\begin{align*}
+& \texttt{pred'}\ x= 0 \\
+\end{align*}
+
+\begin{align*}
+\texttt{pred}\ 2 &=
+(\ecast{Int \rightarrow Int}{x:\{v:Int | v > 0\} -> \{v:Int | v = x - 1\}}{lpred} \ \texttt{pred'})\ 2 \\
+&\rightarrow^\star (\ecast{Int}{\{v:Int | v = 2 - 1\}}{lpred}) \ (\texttt{pred'}\ (\ecast{\{v:Int | v > 0\}}{Int}{lpred} \ 2)) \\ 
+&\rightarrow^\star (\ecast{Int}{\{v:Int | v = 2 - 1\}}{lpred}) \ (\texttt{pred'}\ 2) \\ 
+&\rightarrow^\star (\ecast{Int}{\{v:Int | v = 2 - 1\}}{lpred}) \ 0 \\ 
+&\rightarrow^\star \elabel{lpred} \\ 
+\end{align*}
 
 
-badpred 9 -> 
-  \y:{v:Int | v > 0} (<Int => {v:Int | v = y-1} >  y-3 ) ) 9
-  <Int => {v:Int | v = 9-1} >  6 )
-  <Int => {v:Int | v = 8} >p  6 )
-  ||p
 
-\end{verbatim}
+
+% testing the argument
+You may notice, that in both cases, \texttt{pred'} is applied to a ``casted'' value
+$\ecast{\{v:Int | v > 0\}}{Int}{lpred} \ 2$.
+This is a downcast: the system statically knows the source type of $2$, i.e., 
+$\{v:Int | v > 0\}$ and at runtime it is checked that $2$ is an $Int$.
+Thus, for an application to statically typecheck, the argument should 
+have a refined type and the only way to get a refined type is though a cast.
+But, if we cast a non-positive value to be positive,
+then this cast will fail:
+
+\begin{align*}
+\texttt{pred} \ ((\ecast{Int}{\{v:Int | v > 0\}}{zero})\ 0) &= \elabel{zero}
+\end{align*}
+
 
 \subsubsection{Formal Language}
-
+Lets now extend our core calculus, so that it supports manifest contracts.
+%
 In the expressions of our language we should add a blaming expression
 and a type casting.
 As a refinement the language can use any core expression.
@@ -249,24 +342,25 @@ a blame expression can have any well formed types,
 while a type casting expression behaves as a function from the 
 source to the target type.
 For a casting expression to typecheck, both types should be 
-well formed and compatible, ie, their unrefined types should be 
+well formed and compatible, i.e., their unrefined types should be 
 the same. We check this through a new compatibility judgement.
 
-\begin{figure}[t!]
+\begin{figure}[ht!]
 \centering
 $$
 \begin{array}{rrcl}
 \emphbf{Expressions} \quad 
   & e 
-  & ::= \dots
+  & ::= 
+  & 		 \dots
   \spmid \elabel{l} 
-  \spmid \ecast{\tau}{\tau} 
+  \spmid \ecast{\tau}{\tau}{l} 
   \\[0.05in] 
 
 \emphbf{Predicates} \quad 
   & p
-  & ::= e
-  & \dots
+  & ::= 
+  &		e
   \\[0.05in] 
 
 \end{array}
@@ -291,7 +385,7 @@ $$\begin{array}{cc}
 \inference
   {\isCompatible{\tau_{x_1}}{\tau_{x_2}} &&
    \isCompatible{\tau_1}{\tau_2}}
-  {\isCompatible{\tfun{x_1}{\tau_{x_1}}{tau_1}}{\tfun{x_2}{\tau_{x_2}}{\tau_2}}}
+  {\isCompatible{\tfun{x_1}{\tau_{x_1}}{\tau_1}}{\tfun{x_2}{\tau_{x_2}}{\tau_2}}}
   [\cfunction]
 \end{array}$$
 
@@ -311,7 +405,7 @@ $$\begin{array}{cc}
   {\isWellFormed{\Gamma}{\tau_1} &&
    \isWellFormed{\Gamma}{\tau_2} && 
    \isCompatible{\tau_1}{\tau_2}}
-  {\hastype{\Gamma}{\ecast{\tau_1}{\tau_2}}{\tfun{}{\tau_1}{\tau_2}}}
+  {\hastype{\Gamma}{\ecast{\tau_1}{\tau_2}{}}{\tfun{}{\tau_1}{\tau_2}}}
   [\tcast]
 \end{array}$$
 
