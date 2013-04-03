@@ -12,7 +12,7 @@
 
 \newcommand\isCompatible[2]{\ensuremath{ #1 \Vert #2 }}
 
-\section{Undecidable Systems}
+\section{Undecidable Systems}\label{sec:undec}
 
 As we said, if the refinement language can have arbitrary program expressions,
 we can not statically prove the soundness of a program. 
@@ -490,37 +490,11 @@ As we stated, the source program goes through a transformation and the necessary
 Thus, every time the \tsub rule is used, it is guaranteed that the algorithm can prove
 the subtyping relation.
 
-The rule \tsub says that in any environment $\Gamma$, if $e$ has type $\tau_2$, 
-$\tau_2$ is subtype of $\tau_1$ and $\tau_1$ is well formed, then $e$ has also type $\tau_1$.
-The subtyping relation, reduces subtyping to implication checking.
-For function types, the contravariance rule is used.
-While for base types, the base value $v$ is added to the environment, as a boolean value
-and an implication is created that says that the refinement of the left hand side type
-should imply the refinement of the right hand side type.
-
+The rule \tsub is the one defined in the \ref{subsec:formal}
+where the \texttt{Valid} predicate refers to the algorithm used 
+for implications checking.
 
 \begin{figure}[ht!]
-\medskip \judgementHead{Subtyping}{\isSubType{\Gamma}{\tau_1}{\tau_2}}
-
-$$
-\inference
-   {\Gamma, v:b \vdash  p1 \Rightarrow p2 }
-   {\isSubType{\Gamma}{\tref{b}{p_1}}{\tref{b}{p_2}}}
-   [\tsubBase]
-$$
-
-$$
-\inference
-   {\isSubType{\Gamma}{\tau_2}{\tau_1} &
-	\isSubType{\Gamma, x_2:{\tau_2}}{\SUBST{\tau_1'}{x_1}{x_2}}{\tau_2'}	
-   }
-   {\isSubType{\Gamma}
-	  {\tfun{x_1}{\tau_1}{\tau_1'}}
-	  {\tfun{x_2}{\tau_2}{\tau_2'}}
-}[\tsubFun]
-$$
-
-
 \medskip \judgementHead{Type Checking}{$\hastype{\Gamma}{e}{\tau}$}
 
 $$\begin{array}{cc}

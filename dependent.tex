@@ -1,6 +1,6 @@
 \section{Dependent Types}
 
-\subsection{Overview}
+%\subsection{Overview}
 
 Functional programming languages, like ML and Haskell,
 come with strong static types system, which detects a lot 
@@ -12,107 +12,101 @@ at compile-time, invariants about the run-time values computed by the program.
 %
 Unfortunately, classical type systems only
 capture relatively coarse invariants. For example, the system can
-express the fact that a variable @i@ is of the type @int@, 
-meaning that it is always an integer, but not that it is always an integer within a
-certain range, say between 1 and 99. 
+express the fact that a variable @i@ is of the type @Int@, 
+meaning that it is always an integer, b
+ut not that it is always an integer within a
+certain range, say greater than zero. 
 %
 Thus, the type system is unable to statically ensure the safety of critical operations, 
-such as a division by i, or the accessing of an array a of size 100 at an index
-i. 
+such as a division by i. 
 %
 Instead, the language can only provide a weaker dynamic safety
 guarantee at the additional cost of high performance overhead.
-In an exciting development, several authors have proposed the
+Several authors have proposed the
 use of dependent types [20] as a mechanism for enhancing the
-expressivity of type systems [14, 27, 2, 22, 10]. 
+expressiveness of type systems [14, 27, 2, 22, 10]. 
 
-Such a system can
-express the fact
-$$ i :: \tref{int}{1 \leq v  \land v \leq  99} $$
+Such a system uses the dependent type:
+$$\centering\begin{tabular}{c}
+\begin{code}
+i :: {v:Int | v != 0}
+\end{code}
+\end{tabular}$$
 
-which is the usual type @int@ together with a refinement stating that
-the run-time value of i is an always an integer between 1 and 99.
+that describes all values @v@ if type @Int@ and the refinements
+states that the value @v@ should be different than @0@.
 
-With dependent types, we can defined a safe division operator:
+We can use this dependent type to define a safe division operator:
 
-$$
-safeDiv :: int -> \tref{int}{v \neq 0} -> int
-$$
-$$
-safeDiv x y = x / y
-$$
+$$\centering\begin{tabular}{c}
+\begin{code}
+safeDiv :: Int -> {v:Int | v != 0} -> Int
+\end{code}
+\end{tabular}$$
 
-which expects two arguments: the first one can be any integer
-and the second should be an integer different than zero, and
-returns an integer.
+This type expresses the fact that the division operator takes two
+@Int@ arguments and returns an @Int@.
+Moreover restricts the second argument to be different that
+zero, so as to eliminate division by zero operations. 
 
 When the function @safeDiv@ is actually used, 
 the type system should check that the real arguments do not
-violate @safeDiv@'s specification:
-$$
-n1 = safeDiv 8 9
-n2 = safeDiv 8 0
-n3 = safeDiv 8 n1
-$$
- 
- 
-In the first example, the type system should infer that 9 :: \tref{int}{v>0}.
-Also, the second example should create a type error.
-Finally, the type system should infer if an arbitrary program expression
-can have a given refined type or not.
+violate @safeDiv@'s specification.
+
+So, it is always safe to have @safeDiv 8 9@ since @9@ is always different that zero.
+But, @safeDiv 8 0@ should create a type error.
+Finally, if we apply as a second argument an arbitrary program expression : 
+@safeDiv 8 n@ the type system, in order to accept this application, should 
+infer than its type implies that @n@ is an integer different than zero.
 
 \mypara{Dependent Function Types}
-
 Dependent types, allow the predicate of the result of a function
 to depend of function arguments.
-As an example, we can defined the @id@ function as
+As an example, we can defined the @pred@ function 
+that returns the predecessor of its argument, and give it a very descriptive type:
 
 $$\centering\begin{tabular}{c}\begin{code}
-id :: x:a -> {v:a|v=x}
-id x = x
+pred :: n : Int -> {v:Int | v = n-1}
+pred n = n-1
 \end{code}\end{tabular}$$
 
-As a more complicated example, we can safely access an element
-of an array:
-$$\centering\begin{tabular}{c}\begin{code}
-len :: a:intarray -> {v:int|v>=0}
-sub :: a:intarray -> i:{v:int|0<=v and v< len a} -> int
-\end{code}\end{tabular}$$
-
-In the above example, @sub@ takes as arguments an array of integers
-and an index @i@, which should be greater or equal to zero
-and less than the length of the array, to return the integer
-stored at the index @i@ of @a@.
+When we apply a concrete value to @pred@, this should substitute @n@ in the result type.
+For example @pred 2 :: {v:Int | v = n-1}[2/n] = {v:Int | v = 1}@.
+With this means, the type of the result can have properties that
+depend on function arguments. 
 
 \mypara{Decidability vs Expressiveness}
-If predicates can contain arbitrary program expressions, then 
-one can define an undecidable function:
+If predicates contain arbitrary program expressions, then 
+one can define an undecidable function @terminates@;
+that takes an function argument @f@ and a value @x@ 
+and returns true if and only if the computation @f x@ terminates:
 
 $$\centering\begin{tabular}{c}\begin{code}
-terminates    :: f:(a -> b) -> x:a -> bool
-terminates f x = match (f x) with | _ -> true
+terminates    :: f:(a -> b) -> x:a -> Bool
 \end{code}\end{tabular}$$
 
 and use it inside type predicates:
 
 $$\centering\begin{tabular}{c}\begin{code}
-f:(a->b) -> x: a ->  {v:a|terminates f x}
+f:(a->b) -> x: a ->  {v:Bool|terminates f x}
 \end{code}\end{tabular}$$
 
 Clearly, a dependent type system, which allows arbitrary
 program expressions as predicates is undecidable.
 
-In section  we will describe both undesidable dependent 
-type systems.
-In section we will describe type systems that restrict 
-the predicates language and are statically desidable.
-Finally, we will describe, how abstraction over predicates
+In section \ref{sec:undec},
+we will describe how to reason with undesidable dependent type systems.
+In section \ref{sec:liquid}, 
+we will present a type system that restricts 
+the predicate expressions and is statically decidable.
+In section \ref{sec:abstract} 
+we will present, how abstraction over predicates
 can enhance expressiveness of decidable type systems. 
 
-\subsection{A core language}
+\subsection{A formal language}\label{subsec:formal}
 
-To be able to formally describe type systems, we will define a formal 
-language $\lambda_D$, its syntax and type system:
+To be able to formally describe and compare the type systems, 
+we will define a a core calculus $\lambda_c$, its syntax and type system:
 
 \mypara{Syntax}
 The syntax of expressions and types is summarized in Figure \ref{fig:syntax}.
@@ -155,9 +149,9 @@ $\Gamma$, the expression $e$ will evaluate to a value described by $\tau$.
 The wellformedness rules check that the 
 refinements are indeed $\tbbool$-valued expressions in the 
 appropriate environment.
-The rule \wtBase checks, as usual, that the  
+The rule \wtBase checks that the  
 refinement $\reft$ is boolean.
-The rule \wtFun recursively applies the well formness rule to
+The rule \wtFun recursively applies the wellformdness rule to
 the argument type of the function, and to the result type, 
 after it adds the argument binder with the correct type to 
 the environment.
@@ -166,31 +160,37 @@ the environment.
 The subtyping rules stipulate when the set of values described 
 by type $\tau_1$ is subsumed by the values described by $\tau_2$.
 %
-The rule \tsubBase surves two purposes:
-\begin{itemize}
-\item checks that the basic type is the same in the two types, 
+The rule \tsubBase serves two purposes:
+Firstly,
+it checks that the basic type is the same in the two types, 
 as in vanilla type systems
-\item checks that under the environment $\Gamma$, 
+Moreover, it checks that under the environment $\Gamma$, 
 the left hand side refinement implies the right hand side.
-To do so, we use a $Valid$ which varies between the systems that we will describe.
-\end{itemize}
+To do so, we use a \texttt{Valid} predicate which varies between the systems that we will describe.
+%
 The rule \tsubFun relates two function types according to the contravariant rule.
 
 \mypara{Type Checking Rules}
 The type checking rules check that an expression in of the correct type.
-The rule \tsub states that if an expression is of type $\tau$, 
-then it can be types as any supertype of $\tau$.
+%The rule \tsub states that if an expression is of type $\tau$, 
+%then it can be types as any supertype of $\tau$.
 The rule \tconst checks the types of the constant expressions, according 
 to their definitions.
 The rule \tvar checks the types of the variables, according 
 to the environment $\Gamma$.
 The rule \tfun checks the types of the variables, according 
 to the environment $\Gamma$.
-The rule \tfunction checks that the type of the function-body
-is correct in the environment, exteended with the argument of the function.
-Also, checkes that the type of the argument is well formed. 
-The rule \tapp checks that \textbf{mplamplma}.
+The rule \tfunction checks both that the argument type is well-formed 
+and that the type of the function-body
+is correct in the environment, extended with the argument of the function.
+Finally, the rule \tapp checks that $e_1$ is has a function type
+and that its argument has the type of the argument $e_2$.
+Also, in the result type, the argument $x$ is replaced with the actual argument $e_2$.
 
+You may notice that the subtyping relation 
+is not used in this basic rules,
+but as we stated, the core calculus will be extended to formalize the
+type systems that we will describe.
 
 \begin{figure}[t!]
 \centering
@@ -249,9 +249,7 @@ $$\inference
     {\hastype{\Gamma, p:b}{\reft}{\tbbool}}
     {\isWellFormed{\Gamma}{\tref{b}{p}}}
     [\wtBase]
-$$
-
-$$
+\qquad
 \inference
     {
     \isWellFormed{\Gamma}{\tau_x} &&
@@ -262,29 +260,30 @@ $$
 $$
 
 
-\medskip \judgementHead{Subtyping}{\isSubType{\Gamma}{\tau_1}{\tau_2}}
+\medskip \judgementHead{Subtyping}{\isSubType{\Gamma}{\tau}{\tau}}
 
 $$
 \inference
-   {\text{Valid}(\Gamma, p1, p2)}
+   {(\Gamma, v:b \vdash \texttt{Valid}(p_1 \Rightarrow p_2))}
    {\isSubType{\Gamma}{\tref{b}{p_1}}{\tref{b}{p_2}}}
    [\tsubBase]
 $$
 
 $$
 \inference
-   {\isSubType{\Gamma}{\tau_2}{\tau_1} &
-	\isSubType{\Gamma, x_2:{\tau_2}}{\SUBST{\tau_1'}{x_1}{x_2}}{\tau_2'}	
+   {\isSubType{\Gamma}{\tau_{21}}{\tau_{11}} &
+	\isSubType{\Gamma, x_2:{\tau_{21}}}{\SUBST{\tau_{12}}{x_1}{x_2}}{\tau_{22}}	
    }
    {\isSubType{\Gamma}
-	  {\tfun{x_1}{\tau_1}{\tau_1'}}
-	  {\tfun{x_2}{\tau_2}{\tau_2'}}
+	  {\tfun{x_1}{\tau_{11}}{\tau_{12}}}
+	  {\tfun{x_2}{\tau_{21}}{\tau_{22}}}
 }[\tsubFun]
 $$
 
 
 \medskip \judgementHead{Type Checking}{$\hastype{\Gamma}{e}{\tau}$}
 
+\begin{comment}
 $$\begin{array}{cc}
 
 \inference
@@ -294,7 +293,7 @@ $$\begin{array}{cc}
   {\hastype{\Gamma}{e}{\tau_1}}
   [\tsub]
 \end{array}$$
-
+\end{comment}
 $$\begin{array}{cc}
 
 \inference

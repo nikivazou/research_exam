@@ -1,6 +1,6 @@
 	\newcommand\qset{\ensuremath{\mathbb{Q}}}
 
-\section{Liquid Types}
+\section{Liquid Types}\label{sec:liquid}
 
 
 In this section we will present a dependent type system which is decidable.
@@ -199,11 +199,11 @@ As we said earlier, the refinements in the language
 can not contain arbitrary expressions, but they are limited
 to conjuctions of the logical qualifiers, which form a finite set.
 
-They use a subtyping relation similar to 
-hybrid type checking, 
+They use a subtyping is the one defined in \ref{subsec:formal} 
 but in this setting,  
 the subtyping relation is decidable
-because their refinement language is restricted.
+because their refinement language is restricted
+and can be checked with a SMT solver.
 
 \begin{figure}[t!]
 \centering
@@ -223,27 +223,6 @@ $$
 
 
 \begin{figure}[ht!]
-\medskip \judgementHead{Subtyping}{\isSubType{\Gamma}{\tau_1}{\tau_2}}
-
-$$
-\inference
-   {\Gamma, v:b \vdash  p1 \Rightarrow p2 }
-   {\isSubType{\Gamma}{\tref{b}{p_1}}{\tref{b}{p_2}}}
-   [\tsubBase]
-$$
-
-$$
-\inference
-   {\isSubType{\Gamma}{\tau_2}{\tau_1} &
-	\isSubType{\Gamma, x_2:{\tau_2}}{\SUBST{\tau_1'}{x_1}{x_2}}{\tau_2'}	
-   }
-   {\isSubType{\Gamma}
-	  {\tfun{x_1}{\tau_1}{\tau_1'}}
-	  {\tfun{x_2}{\tau_2}{\tau_2'}}
-}[\tsubFun]
-$$
-
-
 \medskip \judgementHead{Type Checking}{$\hastype{\Gamma}{e}{\tau}$}
 
 $$\begin{array}{cc}
