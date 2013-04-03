@@ -234,3 +234,223 @@ $$\centering
 \end{tabular}$$
 
 With this type, it is straightforward to prove the type of @plusminus@. 
+\subsection{Index-Dependent Invariants}\label{sec:overview:index}
+
+Next, we illustrate how abstract invariants allow us to 
+specify and verify index-dependent invariants of key-value maps. 
+To this end, we encode \emph{extensible vectors} 
+ as functions from @Int@ to 
+some generic range @a@. Formally, we specify vectors as 
+%
+$$\centering\begin{tabular}{c}\begin{code}
+data Vec a <dom :: Int -> Bool, rng :: Int -> a -> Bool> 
+  = V (i:Int<dom> -> a <rng i>)
+\end{code}\end{tabular}$$
+%
+Here, we are parameterizing the definition of the type @Vec@ 
+with \emph{two} abstract refinements, @dom@ and @rng@, which
+respectively describe the \emph{domain} and \emph{range} of the vector.
+That is, @d@ describes the set of \emph{valid} indices, 
+and @r@ specifies an invariant relating each @Int@ index
+with the value stored at that index.
+
+\mypara{Describing Vectors}
+With this encoding, we can descibe various vectors. 
+To start with we can have vectors of @Int@ defined on positive integers
+with values equal to their index:
+
+$$\centering\begin{tabular}{c}\begin{code}
+Vec <{\v -> v > 0}, {\_ v -> v = x}> Int
+\end{code}\end{tabular}$$
+%
+
+Or a vector that is defined only on index 1 with value 12:
+
+$$\centering\begin{tabular}{c}\begin{code}
+Vec <{\v -> v > 0}, {\_ v -> v = x}> Int
+\end{code}\end{tabular}$$
+
+As a more interesting example, we can define a \textit{Null Terminating String}
+with length @n@, 
+as a vector of @Char@ defined on a range @[0, n)@ 
+with its last element equal to the terminating character:
+
+$$\centering\begin{tabular}{c}\begin{code}
+Vec <{\v -> 0 <= v < n }, {\i v -> i = n-1 => v = `\0`}> Char
+\end{code}\end{tabular}$$
+
+Finally, we can encode a Fibonacci memoization vector, that is defined
+on positive integers and its value on index @i@ is either zero
+or the @i@th Fibonacci, and we can use this vector to efficiently compute
+a Fibonacci number:
+
+$$\centering\begin{tabular}{c}\begin{code}
+Vec <{\v -> 0 <= v }, {\i v -> v != 0 => v = fib(i)}> Char
+\end{code}\end{tabular}$$
+
+\mypara{Using Vectors}
+To use the vectors, first we have to type vector operations, like 
+set, get and empty, the appropriate types, which actually means 
+to abstract over the domain and the range predicates. 
+%
+Then, we have to specify the properties we are interested about, 
+as we did for the Fibonacci memoization, or the null terminating string.
+% 
+Finally, we can verify that user function, that transforms the vestors
+preserve these properties.
+
+\subsection{Recursive Invariants}
+
+Next, we turn our attention to recursively defined datatypes, and show 
+how abstract refinements allow us to specify and verify high-level
+invariants that relate the elements of a recursive structure.
+Consider the following refined definition for lists:
+%
+$$\centering\begin{tabular}{c}\begin{code}
+data [a] <p :: a -> a -> Bool> where
+  []  :: [a]<p>
+  (:) :: h:a -> [a<p h>]<p> -> [a]<p>
+\end{code}\end{tabular}$$
+
+The definition states that a value of type @[a]<p>@ 
+is either empty (@[]@) or constructed from a pair of  
+a \emph{head} @h::a@ and a \emph{tail} of a list of 
+@a@ values \emph{each} of which satisfies the refinement @(p h)@. 
+Furthermore, the abstract refinement @p@ holds recursively
+within the tail, ensuring that the relationship @p@ 
+holds between \emph{all} pairs of list elements.
+
+Thus, by plugging in appropriate concrete refinements, 
+we can define the following aliases, which correspond 
+to the informal notions implied by their names:
+$$\centering\begin{tabular}{c}\begin{code}
+type IncrList a = [a]<{\h v -> h <= v}>
+type DecrList a = [a]<{\h v -> h >= v}>
+type UniqList a = [a]<{\h v -> h != v}>
+\end{code}\end{tabular}$$
+%
+That is, @IncrList a@ (resp. @DecrList a@) describes a list sorted
+in increasing (resp. decreasing) order, and @UniqList a@ describes
+a list of \emph{distinct} elements, \ie not containing any duplicates.
+We can use the above definitions to verify
+%
+$$\centering\begin{tabular}{c}\begin{code}
+[1, 2, 3, 4] :: IncrList Int
+[4, 3, 2, 1] :: DecrList Int
+[4, 1, 3, 2] :: UniqList Int
+\end{code}\end{tabular}$$
+%
+More interestingly, we can verify that the usual algorithms 
+produce sorted lists:
+%
+$$\centering\begin{tabular}{c}\begin{code}
+insertSort :: (Ord a) => [a] -> IncrList a 
+insertSort []     = []
+insertSort (x:xs) = insert x (insertSort xs) 
+
+insert :: (Ord a) => a -> IncrList a -> IncrList a 
+insert y []       = [y]
+insert y (x:xs) 
+  | y <= x        = y : x : xs
+  | otherwise     = x : insert y xs
+\end{code}\end{tabular}$$
+%
+Thus, abstract refinements allow us to \emph{decouple} the definition 
+of the list from the actual invariants that hold.
+This, in turn, allows us to conveniently reuse the same 
+underlying (non-refined) type to implement various algorithms 
+unlike, say, singleton-type based implementations which require 
+up to three different types of lists (with three different ``nil" and ``cons" 
+constructors~\cite{Sheard06}). This, makes abstract refinements 
+convenient for verifying complex sorting implementations like that of 
+@Data.List.sort@ which, for efficiency, use lists with different 
+properties (\eg increasing and decreasing).
+
+
+\subsection{Formal Language}
+We suggest that any refinement system can be extended with abstract refinements
+without increasing its complexity.
+%
+First of all, the syntax should be extended to support refinement abstraction
+and application:		
+If refinement abstraction, we abstract from an expression $e$
+the refinement $\pi$ with type $\tau$, while in refinement application
+we instantiate an abstrast refinement with a concrete one $p$
+that may have some parameters $\bar{x}$.
+%
+Then, the predicates of the language should be extended to 
+include abstract refinements, applies to program expressions
+%
+The types of the language should also be extended to include 
+refinement abstraction.
+%
+Finally, two typing rules should be added for the two new expressions:
+The refinement abstraction expression is typed as an refinement abstraction
+type, in a straightforward way.
+In the refinement application, the abstract refinement $\pi$ is replaced with a concrete one
+over the type $\tau$
+
+We have to note that
+Abstract refinements 
+can be treated as uninterprented functions in the implication
+checking algorithm, thus the complexity of the system is not increased.
+Moreover, they appear only in the types, thus they can be erased in run-type.
+Finally, in \cite{Vazou13} refinement abstraction and application can be inferred, 
+thus the user does not have to actually alter the program
+and annotate it with explicit refinement instantiations.
+\begin{figure}[ht!]
+\centering
+$$
+\begin{array}{rrcl}
+\emphbf{Expressions} \quad 
+  & e 
+  & ::= 
+  & 		 \dots
+  \spmid \epabs{\rvar}{\tau}{e}
+  \spmid \epapp{e}{\efunbar{x:\tau_x}{p}} 
+  \\[0.05in] 
+
+\emphbf{Predicates} \quad 
+  & p
+  & ::= 
+  &		\dots
+  \spmid \rvapp{\rvar}{e}  
+  \\[0.05in] 
+\emphbf{Types} \quad 
+  & \tau 
+  & ::= 
+  &		 \dots
+  \spmid \tpabs{\rvar}{\tau}{\tau}
+
+\end{array}
+$$
+\caption{\textbf{Syntax of Expressions, Types and Schemas}}
+\label{fig:syntax}
+\end{figure}
+
+
+\begin{figure}[ht!]
+
+\medskip \judgementHead{Type Checking}{$\hastype{\Gamma}{e}{\tau}$}
+$$\begin{array}{cc}
+\inference
+    {\hastype{\Gamma, \rvar:\tau_\rvar}{e}{\tau} &&
+     \isWellFormed{\Gamma}{\tau} 
+    }
+    {\hastype{\Gamma}{\epabs{\rvar}{\tau_\rvar}{e}}{\tpabs{\rvar}{\tau_\rvar}{\tau}}}
+    [\tpgen]
+&  
+
+\inference
+    {\hastype{\Gamma}{e}{\tpabs{\rvar}{\tau_\rvar}{\tau}} && 
+     \hastype{\Gamma}{\efunbar{x:\tau_x}{p}}{\tau_\rvar}
+    }
+    {\hastype{\Gamma}
+             {\epapp{e}{\efunbar{x:\tau_x}{p}}}
+             {\rpinst{\tau}{\rvar}{\efunbar{x:\tau_x}{p}}}
+    }
+    [\tpinst]
+\end{array}$$
+\caption{\textbf{Static Semantics: Well-formedness, Subtyping and Type Checking}}
+\label{fig:rules}
+\end{figure}
