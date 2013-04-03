@@ -13,7 +13,7 @@ SRCFILES = Makefile  ${TEX} ${STY} ${BIB}.bib
 # make pdf by default
 # all: ${TARGET}.pdf
 
-all: intro.tex hybrid.tex refinements.tex abstract.tex haskell.tex conclusion.tex
+all:
 	pdflatex main
 	bibtex main
 	pdflatex main
