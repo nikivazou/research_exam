@@ -13,28 +13,25 @@ recursive refinements for reasoning about recursive data types, and
 inductive refinements for reasoning about higher-order traversal routines. 
 
 \subsection{The key idea}
-Consider the monomorphic max function on @Int@ values, 
-with the (monomorphic) signature
+Consider the monomorphic @max@ function on @Int@ values.
+We can give @max@ a refinement type, stating that its result
+is greater or equal than both its arguments:
+  
 $$\centering\begin{tabular}{c}
 \begin{code}
-max     :: Int -> Int -> Int
+max     :: x:Int -> y:Int -> {v:Int | v >= x && v >= y}
+max x y = if x > y then x else y
 \end{code}
 \end{tabular}$$
-One could refine the signature to state that
-if both arguments enjoy a specific property, then the result
-will also have this property.
 
-We could type
-%@max :: forall t <: Int. t -> t -> t@
-$$\centering
-\begin{tabular}{c}
-\begin{code}
-max :: forall t <: Int. t -> t -> t
-\end{code}
-\end{tabular}$$
-but this route would introduce the complications
-that surround bounded quantification which could render checking 
-undecidable~\cite{piercebook}.
+With this type signature, if we apply @max@ to two positive integers, 
+say @n@ and @m@, we can get that the result is grater or equal to both 
+of them, as @max n m :: {v:Int | v >=n && v >=m}@.
+But we can not reason about other properties: 
+If we apply @max@ to two even numbers, can not verify that the result is 
+also even.
+%
+Thus, even though we have the information on the input, we lose it on the result.
 
 To solve this problem, we introduce \emph{abstract refinements} 
 which let us 
@@ -67,45 +64,173 @@ the \emph{refinement} parameter of @max@ with the concrete
 refinement 
 after which type checking proceeds as usual. 
 %
-As an example, suppose that we call @max@ with two Even numbers:
+As an example, suppose that we call @max@ with two even numbers:
 
-@n1 :: {v:Int | v % 2 = 0}@,
-@n2 :: {v:Int | v % 2 = 0}@,
+@n :: {v:Int | v % 2 = 0}@,
+@m :: {v:Int | v % 2 = 0}@,
 
 Then, the abstract refinement can be instantiated with a concrete predicate 
 @{\v -> v % 2 = 0}@, 
 which will give @max@ the type
 @max [{\v -> v % 2 = 0}] :: {v:Int |  v % 2 = 0} -> {v:Int |  v % 2 = 0} -> {v:Int |  v % 2 = 0}@
 % 
-Since both @n1@ and @n2@ are even numbers we can verify that the
+Since both @n@ and @m@ are even numbers we can verify that the
 preconditions hold, so the result will also be even:
-@max [{\v -> v % 2 = 0}] n1 n2 :: {v:Int |  v % 2 = 0}@.
+@max [{\v -> v % 2 = 0}] n m :: {v:Int |  v % 2 = 0}@.
 
 This is the basic concept of abstract refinements, which , as we will see have many applications.
 
 \subsection{Inductive Refinements}
-Consider a for function that takes an integer @n@, 
-a base case @x@ and a function @body@ and applies 
-the function to the @x@ n times:
+Consider a @loop@ function that takes 
+a function @f@, an integer @n@, 
+a base case @z@ and applies 
+the function @f@ to the @z@, @n@ times:
 
 $$\centering
 \begin{tabular}{c}
-%
-%for :: lo:Int -> hi:Int -> a<p lo lo> -> (i:Int -> a<p lo i> -> a<p lo (i+1)>) -> a<p lo hi>
 \begin{code}
-     for :: Int -> a -> (Int -> a -> a) -> a
-     for n x body      = loop 0 x 
-       where loop i x 
-               | i < n    = loop (i+1) (body i x)
-               | otherwise = x
-     
-     initUpto :: Vec a -> a -> Int -> Vec a 
-     initUpto a x n = for n a (\i -> set i x) 
+loop :: (Int -> a -> a) -> Int -> a -> a
+loop f n z = go 0 z
+  where go i acc | i < n     = go (i+1) (f i acc)
+                 | otherwise = acc 
 \end{code}
 \end{tabular}$$
 
-We can use the function for to inialize a vector up to n.
-Then we can prove that the result vector is initalized by induction:
+We can use inductive reasoning for this function, as
+\begin{itemize}
+\item For any \textit{loop invariant} @R :: (Int, a)@
+that relates the loop iteration @i@ with the accumulator @acc@
+\item\textbf{Base Case} If @R(0, z)@ holds, thus if @z@ satisfies the
+loop iteration at @0@.
+\item\textbf{Inductive Step} If @R(i, acc)@$\Rightarrow$@R(i+1, f i acc)@ holds; 
+thus, if the function @f@ preserves the loop invariant.
+\item\textbf{Conclusion} Then @R(n, loop f n z)@ holds; thus @loop@'s result 
+satisfies the invariant at @n@.
+\end{itemize}
 
-We can define a relation $R :: (Int, Vector a)$ between integers and vectors, 
-and gives it the meaning $R(n , a)$ iff $a$ is initialized upto $n$.
+We can use an abstract refinement @r :: Int -> a -> Prop@, 
+that relates the loop iteration @i@ with the accumulator @acc@, 
+to encode the loop invariant @R@.
+With this, we give @loop@ a type that actually encodes induction:
+
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+loop :: forall <r :: Int -> a -> Prop> .
+           f : (i:Int -> a<r i> -> a<r (i+1)>) 
+        -> n : {v:Int | n >=0} 
+        -> z : a<r 0> 
+        -> a<r n>
+\end{code}
+\end{tabular}$$
+
+This type says that for any invariant @r@, 
+if the function @f@ preserves the invariant,
+@n@ is a natural number and @z@ satisfies the invariant at @0@,
+then @loop@'s result will satisfy the invariant at @n@.
+
+Now, consider a user function @incr@ that uses @loop@
+and at each iteration increases the accumulator by one:
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+incr :: Int -> Int -> Int
+incr n z = loop g n z
+  where g i acc = acc + 1
+\end{code}
+\end{tabular}$$
+
+In this case, the invariant is that at each iteration @i@,
+the accumulator is equal to @i + z@, or $R(i, acc) \Leftrightarrow acc = i + z$.
+If we instantiate the abstract refinement in @loop@ with this concrete refinement, 
+we get a concrete refinement type for @loop@:
+
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+loop [\i acc -> acc = i + z] 
+        :: f : (i:Int -> {v:a | v = i+z} -> {v:a | v = i+1+z}) 
+        -> n : {v:Int | n >=0} 
+        -> z : {v:a | v = z} 
+        -> {v:a | v = n + z}
+\end{code}
+\end{tabular}$$
+
+We can prove that @loop@'s precondition is satisfied by @g@, 
+thus, we can apply it to @loop@ and get @incr@'s type:
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+incr :: n : {v:Int | n >= 0} 
+     -> z : Int 
+     -> {v:Int | v = n + z}
+\end{code}
+\end{tabular}$$
+
+This type better describes @incr@'s behaviour, 
+as it states that if we apply @incr@ any natural number @n@
+and any integer @z@, we will get @n + z@.
+
+\subsection{Function Composition}
+
+As a next example, we will see how one can use abstract refinements
+to reason about function composition.
+
+Consider a @plusminus@ function that composes a plus and a minus function:
+
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+plusminus :: n:Int -> m:Int -> x:Int -> {v:Int | v = (x - m) + n}
+plusminus n m x = (x - m) + n
+\end{code}
+\end{tabular}$$
+
+However, consider an alternative definition that uses function composition @(.)@
+
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+plusminus n m x = plus . minus
+  where plus  x = x + n
+        minus x = x - m
+\end{code}
+\end{tabular}$$
+
+It is unclear how to give @(.)@ a first order refinement type that
+expresses that the result can be refined with the composition of the
+refinements of both arguments results.
+
+To solve this problem, we can use abstract refinements and give @(.)@ a type:
+
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+(.) :: forall < p :: b -> c -> Prop 
+              , q :: a -> b -> Prop>.
+       f : (x:b -> c<p x>)
+    -> g : (x:a -> b<q x>)
+    -> x : a
+    -> exists[z:b<q x>]. c<p z>
+\end{code}
+\end{tabular}$$
+
+This type abstracts over the refinement @p@ of the result of the first function @f@
+and the refinement @q@ of the result of the second function @g@
+and for any argument @x@, the intermediate result is binded to @z = g x@, 
+so @z@ satisfies @q@ at @x@, and returns a value that satisfies @p@ at the intermediate result.
+
+So back to @plusminus@ example, with the appropriate instantiation we get 
+the concrete refinement type for function composition:
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+(.) [{\x v -> v = x + n}, {\x v -> v = x - m}] 
+    :: f : (x:b -> {v:c | v = x+n})
+    -> g : (x:a -> {v:b | v = x-m})
+    -> x : a
+    -> exists[z:{v:b | v = x-m}]. {v:c | v = z+n}
+\end{code}
+\end{tabular}$$
+
+With this type, it is straightforward to prove the type of @plusminus@. 
