@@ -1,4 +1,4 @@
-%\documentclass{llncs}
+%documentclass{llncs}
 \documentclass[runningheads,a4paper]{article}
 %%% \usepackage[top=1.5cm,bottom=1.5cm,left=2.3cm,right=2cm]{geometry}
 
@@ -40,6 +40,7 @@
   }
 }
 
+\newcommand{\at}{\makeatletter @\makeatother}
 
 %%%%%\usepackage{fancyvrb}
 %%%%%\DefineVerbatimEnvironment{code}{Verbatim}{fontsize=\small}
@@ -58,27 +59,40 @@
 
 \def\sk{\smallskip}		% space before and after theorems
 
-\newtheorem{notation}{Notation}{\itshape}{}
-\newtheorem{invariant}{Invariant}
-
 \input{commands}
 \input{haskellListings}
 
+
+
 \sloppy
+\newcommand\mytitle{Dependent Types and Abstract Refinements} 
 
-\title{Research Exam} 
+\newcommand\myauthor{Niki Vazou}
+\newcommand\institution{University of California, San Diego}
+\newcommand\myemail{nvazou\at cs.ucsd.edu}
 
-\author{
-  Niki Vazou
-}
+\newcommand{\mymaketitle}{
+  \begin{center}
+  	{\LARGE\bf \mytitle \\ \vspace{1cm}}%
+    {\Large \myauthor \\}%
+ 	{\large \myemail \\}%
+  	{\large \institution \\}%
+  \end{center}
+  \par} 
+
 
 \begin{document}
-\maketitle
+\mymaketitle
+\begin{abstract}
+\input{abstract}
+\end{abstract}
+
 
 \input{dependent}
 \input{undecidable}
 \input{liquid}
 \input{abstract_refinements}
+\input{conclusion}
 
 {
 \bibliographystyle{plain}

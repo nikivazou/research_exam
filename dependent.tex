@@ -1,4 +1,4 @@
-\section{Dependent Types}
+\section{Introduction}
 
 %\subsection{Overview}
 
@@ -93,7 +93,11 @@ f:(a->b) -> x: a ->  {v:Bool|terminates f x}
 
 Clearly, a dependent type system, which allows arbitrary
 program expressions as predicates is undecidable.
-
+In this paper, we will describe both expressive and decidable systems.
+%
+The rest of this paper is organized as follows:
+In section \ref{subsec:formal}, we present a core calculus
+that constitutes the base for all the following systems.
 In section \ref{sec:undec},
 we will describe how to reason with undesidable dependent type systems.
 In section \ref{sec:liquid}, 
@@ -103,7 +107,7 @@ In section \ref{sec:abstract}
 we will present, how abstraction over predicates
 can enhance expressiveness of decidable type systems. 
 
-\subsection{A formal language}\label{subsec:formal}
+\section{Preliminaries}\label{subsec:formal}
 
 To be able to formally describe and compare the type systems, 
 we will define a a core calculus $\lambda_c$, its syntax and type system:
