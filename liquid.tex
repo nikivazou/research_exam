@@ -1,13 +1,64 @@
 	\newcommand\qset{\ensuremath{\mathbb{Q}}}
 \newcommand\NV[1]{\columnbreak}
 
-\section{Liquid Types}\label{sec:liquid}
 
+\section{Decidable Type Systems}
+
+In 1991 Freeman and Pfennning, at \cite{FreemanPfenning91} introduced
+a decidable refinement type system for a subset of ML.
+%
+In their system, the programmer could refine dependent
+types for data types; 
+the list type of values $\alpha$ can be refined to 
+describe \texttt{nil} lists, or singleton list, i.e., lists
+with exactly one value.
+%
+These definitions are used for two reasons;
+Firstly, to produce the principal type of 
+data constructors as an intersection type;
+for example \texttt{cons} applied to a value and an empty
+list returns a singleton list; but if it is applied
+to an element and a singleton list it returns an unrefined list.
+More importantly, these definitions are used to 
+construct a finite lattice of refinements of each ML type; 
+obviously a singleton list is less than the unrefined list.
+%
+The datatype lattice is a representation of the subtype
+relationship that is used in the 
+refinement type inference algorithm. 
+Since each lattice is finite, the refinement type
+inference algorithm is decidable.
+
+Later, at \cite{pfenningxi98}, 
+they extended their language to support
+linear arithmetic constraints; thus they could
+encode a list with length some integer $n$ and 
+reason about safety of list indexing.
+In this system, subtyping reduces to predicate implication
+and they used a variant of Fourier's method \cite{OmegaTestCACM} 
+for constraint solving.
+%
+Finally, they created DML(C)\cite{XiPfenning99}, 
+an extension of ML with dependent types, that supports 
+array bound check elimination,
+redundant pattern matching clause removal, 
+tag check elimination and untagged representation of datatypes.
+The type checking is decidable, as they define a finite and decidable
+constrain domain $C$ and subtyping reduces to constraint satisfaction in the 
+domain C.
+%
+DML(C) is acceptable from the pragmatic point of view: programs can often be annotated with
+very little internal change, annotations are usually to the
+point and roughly comparable to what one would find in a
+typical ML program (including signatures). The resulting
+constraint simplification problems can be solved efficiently
+in practice. Also the annotations are mechanically verified,
+and therefore can be fully trusted as program documentation.
 
 {\color{green}
 add other decidable systems:
 \begin{itemize}
-\item \cite{pfenningxi98, XiPfenning99, Xi00, FreemanPfenning91, MandelbaumWalker03, Ou2004}
+\item \cite{MandelbaumWalker03, Ou2004}
 \item \cite{dminor, SwamyCFSBY11}
 \item \cite{SuterKK11}
 \item \cite{UnnoTK13, VytiniotisJCR13} 
@@ -15,6 +66,8 @@ add other decidable systems:
 
 AND SITE Z3 \cite{z3}
 }
+
+\subsection{Liquid Types}\label{sec:liquid}
 
 In this section we will present a dependent type system which is decidable.
 As we stated in the introduction, if the refinement language can contain arbitrary 
