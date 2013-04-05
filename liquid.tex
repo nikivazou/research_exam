@@ -47,25 +47,52 @@ The type checking is decidable, as they define a finite and decidable
 constrain domain $C$ and subtyping reduces to constraint satisfaction in the 
 domain C.
 %
-DML(C) is acceptable from the pragmatic point of view: programs can often be annotated with
-very little internal change, annotations are usually to the
-point and roughly comparable to what one would find in a
-typical ML program (including signatures). The resulting
+
+In DML(C) programs can often be annotated with
+very little internal change and the resulting
 constraint simplification problems can be solved efficiently
-in practice. Also the annotations are mechanically verified,
-and therefore can be fully trusted as program documentation.
+in practice. 
+%
+Its disadvantage is that annotation burden is high for the programmer,  
+as programmers can often expect that 10-20 percent of
+their code will be typing annotations.
+%
+In order to encourage programmers to use dependent specifications in their programs,
+Ou et all, in \cite{Ou2004}, proposed a language design and type system that allows programmers to add
+dependent specifications to program fragments bit by bit. 
+More specifically, certain program components are marked dependent, 
+in which case the type checker verifies
+statically that the programmer has properly maintained dependent typing annotations.
+Other portions of the program are marked simple and in these sections, programmers
+are free to write code as they would in any ordinary simply-typed programming language. When control passes between dependent and simple fragments, data flowing
+from simply-typed code into dependently-typed code is checked dynamically to ensure that the dependent invariants hold.
 
-{\color{green}
-add other decidable systems:
-\begin{itemize}
-\item \cite{MandelbaumWalker03, Ou2004}
-\item \cite{dminor, SwamyCFSBY11}
-\item \cite{SuterKK11}
-\item \cite{UnnoTK13, VytiniotisJCR13} 
-\end{itemize}
+Other improvements for DML(C), are Liquid Types \cite{LiquidPLDI08}, 
+where the annotation burden greatly decreases through type inference.
+We will discuss Liquid Types in the rest of the section.
+% Another extension is described by Mandelbaum et all in \cite{MandelbaumWalker03},
+% where the domain of predicates is extended to describe the state 
+%and the effects of the programs verified.
 
-AND SITE Z3 \cite{z3}
-}
+%Semantic Subtyping
+Many systems, such as DML(C) and Liquid Types use \textit{syntactic subtyping} for constraint 
+generations and then use SMT Solvers, such as CVC3\cite{CVC3}, Yices \cite{Yices}, and Z3 \cite{z3}
+ for constraint solving.
+The opposed technique is \textit{semantic subtyping} where subtyping is totally 
+decided by first order implication checking. 
+Semantic subtyping is 
+
+
+%{\color{green}
+%add other decidable systems:
+%\begin{itemize}
+%\item \cite{dminor, SwamyCFSBY11}
+%\item \cite{SuterKK11}
+%\item \cite{UnnoTK13, VytiniotisJCR13} 
+%\end{itemize}
+%
+%AND SITE Z3 \cite{z3}
+%}
 
 \subsection{Liquid Types}\label{sec:liquid}
 
