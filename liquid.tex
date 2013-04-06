@@ -70,25 +70,41 @@ from simply-typed code into dependently-typed code is checked dynamically to ens
 Other improvements for DML(C), are Liquid Types \cite{LiquidPLDI08}, 
 where the annotation burden greatly decreases through type inference.
 We will discuss Liquid Types in the rest of the section.
-% Another extension is described by Mandelbaum et all in \cite{MandelbaumWalker03},
-% where the domain of predicates is extended to describe the state 
-%and the effects of the programs verified.
 
 %Semantic Subtyping
 Many systems, such as DML(C) and Liquid Types use \textit{syntactic subtyping} for constraint 
 generations and then use SMT Solvers, such as CVC3\cite{CVC3}, Yices \cite{Yices}, and Z3 \cite{z3}
  for constraint solving.
-The opposed technique is \textit{semantic subtyping} where subtyping is totally 
-decided by first order implication checking. 
-Semantic subtyping is 
+
+% EXTENSIONS
+Until then, the idea of syntactic subtyping for constraint generation
+and an SMT solver for constraint solving has been extended in various ways:
+%
+Mandelbaum et all in \cite{MandelbaumWalker03},
+extended the domain of predicates to describe the state 
+and the effects of the programs verified.
+%
+Suter et all, in \cite{SuterKK11} increase the power of reasoning 
+to support user defined recursive functions.
+% automatic inference of ghost variables
+Finally,  Unno et all, in \cite{UnnoTK13},
+created a relative complete system for higher-order functional programs.
+ 
+Apart from via SMT solvers:
+Dminor, \cite{dminor} uses \textit{semantic subtyping} where subtyping is totally 
+decided by first order implication checking while 
+HALO \cite{VytiniotisJCR13} uses \textit{denotational semantics}
+to prove specification checking.
+
+
 
 
 %{\color{green}
 %add other decidable systems:
 %\begin{itemize}
-%\item \cite{dminor, SwamyCFSBY11}
-%\item \cite{SuterKK11}
-%\item \cite{UnnoTK13, VytiniotisJCR13} 
+%\item \cite{SwamyCFSBY11}
+%\item 
+%\item \cite{} 
 %\end{itemize}
 %
 %AND SITE Z3 \cite{z3}
