@@ -90,7 +90,7 @@ of this argument.
 \mypara{Verification}
 The \textit{verification} is a procedure that takes an input 
 a program, i.e.,  definitions for functions and values,
-and some specifications, i.e., refinementtype signatures for functions and values,
+and some specifications, i.e., refinement type signatures for functions and values,
 and decides whether the specifications hold for the program.
 %
 Informally, it checks that 
@@ -122,15 +122,15 @@ Reasoning in a higher-order logic is undecidable,
 thus if arbitrary program values appear in the refinements,
 the verification procedure is undecidable.
 %
-As we will see, 
-if the refinement language is , i.e., is less expressive,
+As we shall see, 
+if the refinement language is restricted, i.e., is less expressive,
 verification can be decidable.
 
 The rest of this paper is organized as follows:
 In section \ref{subsec:formal}, we present a core calculus
 that constitutes the base for many refinement type systems.
 In section \ref{sec:undec},
-we describe reasoning in undesidable refinement type systems.
+we describe reasoning in undecidable refinement type systems.
 In section \ref{sec:liquid}, 
 we present less expressive type systems
 that are decidable.
@@ -142,91 +142,34 @@ Finally, we conclude.
 \section{Preliminaries}\label{subsec:formal}
 
 To be able to formally describe and compare the type systems, 
-we will define a a core calculus $\lambda_c$, its syntax and type system:
+we will define a a core calculus $\lambda_C$, its syntax and type system:
 
-\mypara{Syntax}
+\subsection{Syntax}
 The syntax of expressions and types is summarized in Figure \ref{fig:syntax}.
-$\lambda_D$ expressions include variables, constants, $\lambda$-abstractions
+$\lambda_C$ expressions include variables, constants,
+typed $\lambda$-abstractions
 and function applications. 
-Basic types can be integer or boolean.
-$\lambda_D$ types can be dependent types and function types.
+%
+Constants can be primitive integers, 
+$0, 1, 2, \dots$ or primitive booleans: \texttt{true} or \texttt{false}
+and can take basic types, such as integer or boolean.
+%
+A basic type can be refined with a predicate and construct a basic
+refinement type.
+Refinement types also contain function types, 
+in which, 
+a variable binds the argument,
+so that the result refinement can refer to it.  
+%
 The predicate $p$ is
-not yet defined. As we noted earlier, if $p$ contains arbitrary program 
-expressions, the type system is undecidable.
-In dependent function types we use a variable to bind the argument, 
-as it can be used in the type of the result.
+not yet defined. 
+As noted earlier, if $p$ contains arbitrary program 
+expressions, the type system is undecidable, but we 
+will present systems, where $p$ is restricted.
 
-Finally, we define a typing environment $\Gamma$, that maps variables to their type.
+Finally, we define a typing environment $\Gamma$, that maps variables to their type,
+and will be used in the rules.
 
-\mypara{Static Typing}
-
-There are three types of judgments:
-\begin{itemize}
-\item{\emphbf{Wellformedness judgments} (\isWellFormed{\Gamma}{\tau})} 
-state that a type $\tau$ is well-formed under environment
-$\Gamma$, that is, the refinements in $\tau$ are boolean 
-expressions in the environment $\Gamma$.
-
-\item{\emphbf{Subtyping judgments} (\isSubType{\Gamma}{\tau_1}{\tau_2})} 
-state that the type $\tau_1$ is a subtype of the type
-$\tau_2$ under environment $\Gamma$, that is, when the free variables
-of $\tau_1$ and $\tau_2$
-are bound to values described by $\Gamma$, the set of values described
-by $\tau_1$ is contained in the set of values described by $\tau_2$. 
-
-
-\item{\emphbf{Typing judgments} (\hastype{\Gamma}{e}{\tau})} state that
-the expression $e$ has the type $\tau$ under environment $\Gamma$,
-that is, when the free variables in $e$ are bound to values described by 
-$\Gamma$, the expression $e$ will evaluate to a value described by $\tau$.
-\end{itemize}
-
-\mypara{Wellformedness Rules}
-The wellformedness rules check that the 
-refinements are indeed $\tbbool$-valued expressions in the 
-appropriate environment.
-The rule \wtBase checks that the  
-refinement $\reft$ is boolean.
-The rule \wtFun recursively applies the wellformdness rule to
-the argument type of the function, and to the result type, 
-after it adds the argument binder with the correct type to 
-the environment.
-
-\mypara{Subtyping Rules}
-The subtyping rules stipulate when the set of values described 
-by type $\tau_1$ is subsumed by the values described by $\tau_2$.
-%
-The rule \tsubBase serves two purposes:
-Firstly,
-it checks that the basic type is the same in the two types, 
-as in vanilla type systems
-Moreover, it checks that under the environment $\Gamma$, 
-the left hand side refinement implies the right hand side.
-To do so, we use a \texttt{Valid} predicate which varies between the systems that we will describe.
-%
-The rule \tsubFun relates two function types according to the contravariant rule.
-
-\mypara{Type Checking Rules}
-The type checking rules check that an expression in of the correct type.
-%The rule \tsub states that if an expression is of type $\tau$, 
-%then it can be types as any supertype of $\tau$.
-The rule \tconst checks the types of the constant expressions, according 
-to their definitions.
-The rule \tvariable checks the types of the variables, according 
-to the environment $\Gamma$.
-%The rule \tfun checks the types of the variables, according 
-%to the environment $\Gamma$.
-The rule \tfunction checks both that the argument type is well-formed 
-and that the type of the function-body
-is correct in the environment, extended with the argument of the function.
-Finally, the rule \tapp checks that $e_1$ is has a function type
-and that its argument has the type of the argument $e_2$.
-Also, in the result type, the argument $x$ is replaced with the actual argument $e_2$.
-
-You may notice that the subtyping relation 
-is not used in this basic rules,
-but as we stated, the core calculus will be extended to formalize the
-type systems that we will describe.
 
 \begin{figure}[t!]
 \centering
@@ -272,51 +215,110 @@ $$
 
 \end{array}
 $$
-\caption{\textbf{Syntax of Expressions, Types and Schemas}}
+\caption{\textbf{Syntax of $\lambda_C$}}
 \label{fig:syntax}
 \end{figure}
 
 
+
+\subsection{Typing}
+The typing rules used by $\lambda_C$ are summarized in Figure \ref{fig:rules}.
+
+% \subsubsection*{typing}
+\mypara{Type Checking}
+Type checking rules state that
+an expression $e$ has a type $\tau$ under an environment $\Gamma$,
+that is, when the free variables in $e$ are bound to values described by 
+$\Gamma$, the expression $e$ will evaluate to a value described by $\tau$.
+We write \hastype{\Gamma}{e}{\tau} and create one rule for each program expression.
+
+The rule \tconst uses a function $tc$ that maps each primitive constant 
+to its predefined type.
+%
+The rule \tvariable checks the type of a variable, according 
+to the environment $\Gamma$.
+%
+The rule \tfunction checks the type of the function-body
+in the environment, extended with the argument of the function.
+Since the argument type is given, it could be any arbitrary type,
+say \tref{b}{1},
+which is invalid, as a base type is refined with 
+the value $1$, which can not be a valid predicate.
+%
+A wellformedness rule is used to 
+check that the argument type is \textit{well-formed}, 
+i.e., its refinements are valid predicate expressions.
+%
+Finally, the rule \tapp checks that in an application \eapp{e_1}{e_2}
+the expression $e_1$ has a function type
+whose argument has the type of the argument $e_2$.
+%
+As we discussed in the introduction, in the final type,
+the parameter $x$ should be replaced with the actual argument $e_2$.
+
+%\subsubsection{wf}
+\mypara{Wellformedness rules}
+Wellformedness rules  
+state that a type $\tau$ is well-formed under environment
+$\Gamma$, that is, the refinements in $\tau$ are boolean 
+expressions in the environment $\Gamma$.
+%
+We write \isWellFormed{\Gamma}{\tau} and create one rule for each type.
+
+The rule \wtBase checks that in a basic refinement type,  
+the refinement is a valid boolean expression.
+The environment of this check is extended with the value that is refined;
+as an example, consider 
+we should check that \tref{\texttt{int}}{v > 0} is valid, 
+we check that $v > 0$ is a boolean expression, in an 
+environment where $v$ is an integer value.
+%
+The rule \wtFun recursively applies the wellformedness rule to
+the argument type of the function, and to the result type, 
+in an environment extended with the argument parameter.
+
+%\subsubsection{sub}
+\mypara{Subtyping rules}
+Consider that the predefined type for the integer $2$
+is an integer that is exactly equal to $2$.
+The type system, can check,via the rule \tconst , that 
+\hastype{\emptyset}{2}{\tref{\texttt{int}}{v = 2}}.
+If $2$ is applied to a function that expects a
+positive integer, say $f::\tfun{x}{\tref{\texttt{int}}{v>0}}{\tau}$,
+the type system should also check that 
+\hastype{\emptyset}{2}{\tref{\texttt{int}}{v > 0}}.
+%
+There are many ways for this check to succeed.
+We will present \textit{syntactic subtyping},
+in which subtyping reduces to implication checking.
+In our example, $v = 2 \Rightarrow v > 0 $ implies 
+$\tref{\texttt{int}}{v=2} \preceq \tref{\texttt{int}}{v>0}$.
+
+
+In the general case, subtyping rules
+state that the type $\tau_1$ is a subtype of the type
+$\tau_2$ under environment $\Gamma$, that is, when the free variables
+of $\tau_1$ and $\tau_2$
+are bound to values described by $\Gamma$, the set of values described
+by $\tau_1$ is contained in the set of values described by $\tau_2$. 
+We write \isSubType{\Gamma}{\tau_1}{\tau_2} and create one rule for every type:
+
+The rule \tsubBase serves two purposes:
+Firstly,
+it checks that the basic type is the same in the two types.
+Moreover, it checks that under the environment $\Gamma$, 
+the left hand side refinement implies the right hand side.
+The implpication checking is enforced by a predicate \texttt{Valid} 
+which varies between the systems that we will describe.
+%
+The rule \tsubFun relates two function types according to the contravariant rule.
+
+
+In the rest of this paper, we will the core calculus $\lambda_C$
+upon which we will build a subset of four typing systems\cite{TODO}.
+
+
 \begin{figure}[ht!]
-\judgementHead{Well-Formedness}{\isWellFormed{\Gamma}{\tau}}
-
-
-$$\inference
-    {\hastype{\Gamma, p:b}{\reft}{\tbbool}}
-    {\isWellFormed{\Gamma}{\tref{b}{p}}}
-    [\wtBase]
-\qquad
-\inference
-    {
-    \isWellFormed{\Gamma}{\tau_x} &&
-	\isWellFormed{\Gamma, x:\tau_x}{\tau}
-    }
-    {\isWellFormed{\Gamma}{\tfun{x}{\tau_x}{\tau}}}
-    [\wtFun]
-$$
-
-
-\medskip \judgementHead{Subtyping}{\isSubType{\Gamma}{\tau}{\tau}}
-
-$$
-\inference
-   {(\Gamma, v:b \vdash \texttt{Valid}(p_1 \Rightarrow p_2))}
-   {\isSubType{\Gamma}{\tref{b}{p_1}}{\tref{b}{p_2}}}
-   [\tsubBase]
-$$
-
-$$
-\inference
-   {\isSubType{\Gamma}{\tau_{21}}{\tau_{11}} &
-	\isSubType{\Gamma, x_2:{\tau_{21}}}{\SUBST{\tau_{12}}{x_1}{x_2}}{\tau_{22}}	
-   }
-   {\isSubType{\Gamma}
-	  {\tfun{x_1}{\tau_{11}}{\tau_{12}}}
-	  {\tfun{x_2}{\tau_{21}}{\tau_{22}}}
-}[\tsubFun]
-$$
-
-
 \medskip \judgementHead{Type Checking}{$\hastype{\Gamma}{e}{\tau}$}
 
 \begin{comment}
@@ -362,6 +364,45 @@ $$\begin{array}{cc}
 
 \end{array}$$
 
-\caption{\textbf{Static Semantics: Well-formedness, Subtyping and Type Checking}}
+\judgementHead{Well-Formedness}{\isWellFormed{\Gamma}{\tau}}
+
+$$\inference
+    {\hastype{\Gamma, v:b}{p}{\tbbool}}
+    {\isWellFormed{\Gamma}{\tref{b}{p}}}
+    [\wtBase]
+\qquad
+\inference
+    {
+    \isWellFormed{\Gamma}{\tau_x} &&
+	\isWellFormed{\Gamma, x:\tau_x}{\tau}
+    }
+    {\isWellFormed{\Gamma}{\tfun{x}{\tau_x}{\tau}}}
+    [\wtFun]
+$$
+
+
+\medskip \judgementHead{Subtyping}{\isSubType{\Gamma}{\tau}{\tau}}
+
+$$
+\inference
+   {(\Gamma, v:b \vdash \texttt{Valid}(p_1 \Rightarrow p_2))}
+   {\isSubType{\Gamma}{\tref{b}{p_1}}{\tref{b}{p_2}}}
+   [\tsubBase]
+$$
+
+$$
+\inference
+   {\isSubType{\Gamma}{\tau_{21}}{\tau_{11}} &
+	\isSubType{\Gamma, x_2:{\tau_{21}}}{\SUBST{\tau_{12}}{x_1}{x_2}}{\tau_{22}}	
+   }
+   {\isSubType{\Gamma}
+	  {\tfun{x_1}{\tau_{11}}{\tau_{12}}}
+	  {\tfun{x_2}{\tau_{21}}{\tau_{22}}}
+}[\tsubFun]
+$$
+
+
+
+\caption{\textbf{Static Semantics for $\lambda_C$}}
 \label{fig:rules}
 \end{figure}
