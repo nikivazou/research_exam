@@ -25,6 +25,10 @@
 \texttt{\{v:{\color{colorint}Int}|v = #1 - 1\}}
 }
 
+\newcommand\tteq[1]{
+\texttt{\{v:{\color{colorint}Int}|v = #1\}}
+}
+
 \newcommand\tlabel{T-Label}
 \newcommand\tcast{T-Cast}
 
@@ -417,7 +421,7 @@ $$
 
 \end{array}
 $$
-\caption{\textbf{Syntax of Expressions, Types and Schemas}}
+\caption{\textbf{Syntax} from $\lambda_C$ to $\lambda_{CC}$}
 \label{fig:syntax}
 \end{figure}
 
@@ -462,7 +466,7 @@ $$\begin{array}{cc}
 \end{array}$$
 
 
-\caption{\textbf{Static Semantics: Well-formedness, Subtyping and Type Checking}}
+\caption{\textbf{Static Semantics} from $\lambda_C$ to $\lambda_{CC}$}
 \label{fig:rules}
 \end{figure}
 
@@ -476,15 +480,17 @@ code paths of actual execution.
 This disadvantages are eliminated in Flanagan's Hybrid Type Checking \cite{flanagan06}.
 %
 
-Instead of type casting, Flanagan used subtyping to convert values from one type to another.
-So, if we want to prove that $2$ is a positive number, we have to prove that 
-the following subtyping holds:
-$$\{v:Int | v = 2\} <: \{v:Int | v > 0\}$$
-This, in turn reduces to implication checking:
+Apart from type casting, Flanagan used syntactic subtyping to convert values from one type to another.
+As an example, we know that @2@ is an integer exactly equal to @2@
+and we want to deduce that it is a positive number.
+We write :
+$$\tteq{2} \preceq \ttpos $$
+This relation means that every value that has the left-hand side type
+should also have the right-hand side type. 
+Subtyping reduces to implication checking, as discussed in \ref{subsec:formal}.
+In our example, we get the implication:
 $$ v = 2 \Rightarrow v > 0$$
 which is easy to prove with some algorithm that uses linear arithmetic.
-%So, in this system, $2$ can be applied to our \texttt{pred} function without a type cast.
-
 
 Flanagan's type system checks implications statically, whenever possible
 and dynamically, only when necessary.
@@ -492,13 +498,12 @@ He assumes that
 there exists an algorithm that within limited time can
 conservatively approximate implications between predicates.
 Say that we know that %in an environment $\Gamma$, 
-$e :: \tau_s$ and we want to prove that $e :: \tau_t$, 
+$e :: \tau_s$ and we want to use $e$ as if it had a target type $\tau_t$, %that $e :: \tau_t$, 
 then we have to prove that the source type is subtype of the target, 
 or $\tau_s\preceq \tau_t$. 
 Subtyping is reduced to implication checking, thus implications of the form
 $e_s \Rightarrow e_t$ are created.
-Then,
-we apply the algorithm to each implication and there are three cases:
+If we apply the algorithm to each implication, there are three cases:
 \begin{itemize}
 \item The algorithm proves that all implications hold, 
  $\vdash e_s \Rightarrow e_t$, 
@@ -514,7 +519,7 @@ to dynamically ensure that values returned by $e$ are actually of the desired ty
 \end{itemize}
 
 So the program is transformed to include all required type casts, 
-i.e., the ones that can not be statically proved.
+i.e., the ones that can neither be statically proved nor rejected.
 
 
 Compared to manifest contacts, Hybrid type system has two advantages:
@@ -528,12 +533,14 @@ a purely functional programming language that performs hybrid type checking
 and queries the Simplify \cite{Simplify} Theorem Prover for implication checking.
 
 \subsubsection{Formal Language}
-We will extend our core language $\lambda_{cc}$ to $\lambda_{ch}$,
+We will extend our core language $\lambda_{CC}$ to $\lambda_{CH}$,
 so as to support hybrid type checking. 
 The syntax of the language is not extended, but we need to add the subtyping rules.
 As we stated, the source program goes through a transformation and the necessary casts are added.
-Thus, every time the \tsub rule is used, it is guaranteed that the algorithm can prove
+Thus, every time the \tsub rule is used, 
+it is guaranteed that the algorithm can either prove or reject
 the subtyping relation.
+Thus, the subtyping relation is decidable.
 
 The rule \tsub is the one defined in the \ref{subsec:formal}
 where the \texttt{Valid} predicate refers to the algorithm used 
@@ -552,7 +559,7 @@ $$\begin{array}{cc}
   [\tsub]
 \end{array}$$
 
-\caption{\textbf{Static Semantics: Well-formedness, Subtyping and Type Checking}}
+\caption{\textbf{Static Semantics} from $\lambda_{CC}$ to $\lambda_{CH}$}
 \label{fig:rules}
 \end{figure}
 
