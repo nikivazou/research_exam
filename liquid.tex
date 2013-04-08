@@ -3,31 +3,28 @@
 
 
 \section{Decidable Type Systems}\label{sec:liquid}
-
+%%Simplify!!!
 In 1991 Freeman and Pfennning, at \cite{FreemanPfenning91} introduced
 a decidable refinement type system for a subset of ML.
 %
-In their system, the programmer could refine dependent
-types for data types; 
-the list type of values $\alpha$ can be refined to 
-describe \texttt{nil} lists, or singleton list, i.e., lists
-with exactly one value.
+In their system, the programmer defines refinement
+types for the vanilla data types; 
+for example, the vanilla 
+list data type can be refined to 
+describe \texttt{nil} lists, or \texttt{singleton} lists, i.e., lists
+with exactly one element.
 %
-These definitions are used for two reasons;
-Firstly, to produce the principal type of 
-data constructors as an intersection type;
-for example \texttt{cons} applied to a value and an empty
-list returns a singleton list; but if it is applied
-to an element and a singleton list it returns an unrefined list.
-More importantly, these definitions are used to 
-construct a finite lattice of refinements of each ML type; 
-obviously a singleton list is less than the unrefined list.
+These definitions are used to 
+construct a finite datatype lattice of each ML type;
+a singleton list or a nill list is
+also an unrefined list, thus both refined lists are 
+less than the unrefined one in the lattice.
 %
 The datatype lattice is a representation of the subtype
 relationship that is used in the 
 refinement type inference algorithm. 
-Since each lattice is finite, the refinement type
-inference algorithm is decidable.
+Since each lattice is finite, the 
+subtyping relation is decidable.
 
 Later, at \cite{pfenningxi98}, 
 they extended their language to support
@@ -39,16 +36,18 @@ and they used a variant of Fourier's method \cite{OmegaTestCACM}
 for constraint solving.
 %
 Finally, they created DML(C)\cite{XiPfenning99}, 
-an extension of ML with dependent types, that supports 
+an extension of ML with refinement types, that supports 
 array bound check elimination,
 redundant pattern matching clause removal, 
 tag check elimination and untagged representation of datatypes.
-The type checking is decidable, as they define a finite and decidable
-constrain domain $C$ and subtyping reduces to constraint satisfaction in the 
-domain C.
+%
+Refinements in DML(C) are restricted to a finite and decidable
+constrain domain $C$, 
+which renders constraint solving, and thus subtyping decidable.
 %
 
-In DML(C) programs can often be annotated with
+DML(C)  is a practical programming language, in the sense that 
+programs can often be annotated with
 very little internal change and the resulting
 constraint simplification problems can be solved efficiently
 in practice. 
@@ -57,24 +56,28 @@ Its disadvantage is that annotation burden is high for the programmer,
 as programmers can often expect that 10-20 percent of
 their code will be typing annotations.
 %
-In order to encourage programmers to use dependent specifications in their programs,
+In order to encourage programmers to use refinement specifications in their programs,
 Ou et all, in \cite{Ou2004}, proposed a language design and type system that allows programmers to add
 dependent specifications to program fragments bit by bit. 
 More specifically, certain program components are marked dependent, 
 in which case the type checker verifies
-statically that the programmer has properly maintained dependent typing annotations.
+statically that the programmer has properly maintained refinement typing annotations.
 Other portions of the program are marked simple and in these sections, programmers
 are free to write code as they would in any ordinary simply-typed programming language. When control passes between dependent and simple fragments, data flowing
 from simply-typed code into dependently-typed code is checked dynamically to ensure that the dependent invariants hold.
-
-Other improvements for DML(C), are Liquid Types \cite{LiquidPLDI08}, 
-where the annotation burden greatly decreases through type inference.
-We will discuss Liquid Types in the rest of the section.
+Liquid Types \cite{LiquidPLDI08}, 
+proposed type inference, as a means of decreasing the annotation burden.
+We will present Liquid Types in the rest of the section.
 
 %Semantic Subtyping
-Many systems, such as DML(C) and Liquid Types use \textit{syntactic subtyping} for constraint 
-generations and then use SMT Solvers, such as CVC3\cite{CVC3}, Yices \cite{Yices}, and Z3 \cite{z3}
- for constraint solving.
+%\mypara{SMT solvers}
+Many systems discussed so far, including DML(C) and Liquid Types, 
+use \textit{syntactic subtyping} for constraint 
+generation and SMT solvers for constraint solving.
+\textit{Satisfiability Modulo Theories}(SMT) solvers solve implications 
+for (fragments of) first-order logic plus various standard theories such as
+equality, real and integer (linear) arithmetic, bit vectors, and (extensional) arrays. 
+Some of the leading systems include  CVC3\cite{CVC3}, Yices \cite{Yices}, and Z3 \cite{z3}.
 
 % EXTENSIONS
 Until then, the idea of syntactic subtyping for constraint generation
@@ -90,7 +93,8 @@ to support user defined recursive functions.
 Finally,  Unno et all, in \cite{UnnoTK13},
 created a relative complete system for higher-order functional programs.
  
-Apart from via SMT solvers:
+Apart from syntactic subtyping, SMT solvers can be used in other 
+refinement decidable systems:
 Dminor, \cite{dminor} uses \textit{semantic subtyping} where subtyping is totally 
 decided by first order implication checking while 
 HALO \cite{VytiniotisJCR13} uses \textit{denotational semantics}
@@ -112,34 +116,28 @@ to prove specification checking.
 
 \subsection{Liquid Types}\label{subsec:liquid}
 
-In this section we will present a dependent type system which is decidable.
-As we stated in the introduction, if the refinement language can contain arbitrary 
-program expressions, then type checking is undecidable.
-%
-In Liquid Types\cite{LiquidPLDI08},  Rondon et all restricted the refinement logic according to a predetermined 
-finite set of qualifiers,  which gives not only decidable type checking, but also automatic
+In Liquid Types\cite{LiquidPLDI08}, 
+Rondon et all restrict the refinement language according to a 
+finite set of qualifiers, and achieve not only decidable type checking, but also automatic
 type inference.
-
-
 
 The system takes as input a program and 
 a finite set of \textit{logical qualifiers}
 which are simple boolean predicates 
-that encode the properties we care to verify. 
+that encode the properties to be verified. 
 The system then infers
-liquid types, which are dependent types where the refinement predicates are conjunctions of the logical qualifiers.
+\textit{liquid types}, which are dependent types where the refinement predicates are conjunctions of the logical qualifiers.
 In the system, type checking and inference are decidable for
 three reasons. 
 %
 First, they use a conservative but decidable
-notion of subtyping, where they reduce the subtyping of arbitrary
-dependent types to a set of implication checks over base types,
-each of which is deemed to hold if and only if an embedding of
-the implication into a decidable logic yields a valid formula in
+notion of subtyping, where 
+subtyping reduces to implication checks in a decidable logic.
+Each implication holds if and only if it yields a valid formula in
 the logic. 
 %
 Second, an expression has a valid liquid type derivation
-only if it has a valid unrefined type derivation, and the dependent 
+only if it has a valid unrefined type derivation, and the refinement 
 type of every subexpression is a refinement of its vanilla type. 
 %
 Third, in any valid type derivation, the types of certain expressions
@@ -147,14 +145,13 @@ must be liquid. Thus, inference becomes decidable, as the space of
 possible types is bounded. 
 
 
-\subsection{Logical Qualifiers and Liquid Types.}
-
+\mypara{Logical Qualifiers and Liquid Types.}
 A logical qualifier is a
 boolean-valued expression (i.e., predicate) over the program variables, 
 the special value variable @v@ which is distinct from the
 program variables, and the special placeholder variable $\star$ that
 can be instantiated with program variables. 
-We can assume, that $\mathcal{Q}$ is the set of logical qualifiers
+Let $\mathcal{Q}$ be the set of logical qualifiers
 $\{0 \leq v, \star \leq v, v < \star,  v = \star + 1\}$. 
 %
 We say that
@@ -166,16 +163,24 @@ $x \leq v$ matches the qualifier $\star \leq v$.
 We write $\mathcal{Q}^\star$
 for the set of all
 qualifiers not containing $\star$ that match some qualifier in \qset. 
-For example, when \qset is as defined as above, 
+For example, when \qset\ is as defined as above, 
 and $x$, $y$ and $n$ are program variables.
 $\qset^\star$
 includes the qualifiers
 $\{0 \leq v, x \leq v, y \leq v, v = n + 1, v <n\}$. 
-A liquid type over \qset is a dependent type where the refinement predicates are
+A liquid type over \qset\ is a refinement type where the refinement predicates are
 conjunctions of qualifiers from $\qset ^ \star$.
 
-\subsection{Overview}
-\subsubsection{Type Inference}
+%\subsection{Overview}
+\mypara{Type Inference}
+Type inference is performed in three steps:
+(1) The vanilla type of each expression is refined with liquid variables
+which represent the unknown refinements.
+(2) Syntactic subtyping is used to create implication constraints 
+between the unknown variables and the concrete refinements.
+(3) A theorem prover is used to find the strongest conjunction
+of qualifiers in \qset\
+that satisfies the subtyping constraints.   
 
 As an example consider our pred example
 $$\centering
@@ -242,7 +247,7 @@ $$
 (Step 3)Since the program is ``open'', i.e., there are no calls to @pred@,
 we assign @k_p@ true, meaning that any integer arguments can be
 passed, and use a theorem prover to find the strongest conjunction
-of qualifiers in \qset
+of qualifiers in \qset\
 that satisfies the subtyping constraints. 
 The algorithm
 infers that $v = n-1$ is the strongest solution for @k_p@.
