@@ -1,4 +1,29 @@
-\newcommand\trefc[4]{\ensuremath{\langle\{#1 : #2  \mid #3 \}\rangle^{#4}}}
+\newcommand\labelcolor{OliveGreen}
+
+
+\newcommand\trefc[4]{
+\ensuremath{
+  \langle
+	\texttt{\{#1:} #2  \texttt{|} #3 \texttt{\}}
+  \rangle
+	^{\color{\labelcolor}#4}
+}}
+
+\newcommand\mklabel[1]{\color{\labelcolor}{#1}}
+
+\definecolor{colorint}{rgb}{0.71,0.33,0.14}
+
+\newcommand\trefint[2]{\trefc{v}{{\color{colorint}\texttt{Int}}}{#1}{#2}}
+\newcommand\trefpos[1]{\trefint{v>0}{#1}}
+
+\newcommand\tyint{{\color{colorint}\texttt{Int}}}
+\newcommand\ttpos{
+\texttt{\{v:{\color{colorint}Int}|v > 0\}}
+}
+
+\newcommand\ttpred[1]{
+\texttt{\{v:{\color{colorint}Int}|v = #1 - 1\}}
+}
 
 \newcommand\tlabel{T-Label}
 \newcommand\tcast{T-Cast}
@@ -7,23 +32,28 @@
 \newcommand\cfunction{C-Fun}
 
 
-\newcommand\elabel[1]{\ensuremath{\Uparrow \ #1}}
-\newcommand\ecast[3]{\ensuremath{\langle #1 \Rightarrow #2 \rangle^{#3}}}
+\newcommand\predname{{\color{blue}\texttt{pred}}}
+\newcommand\prednamep{{\color{blue}\texttt{pred'}}}
+
+\newcommand\elabel[1]{\ensuremath{\Uparrow \mklabel{#1}}}
+\newcommand\ecast[3]{\ensuremath{\langle #1 \Rightarrow #2 \rangle^{\mklabel{#3}}}}
 
 \newcommand\isCompatible[2]{\ensuremath{ #1 \Vert #2 }}
 
 \section{Undecidable Systems}\label{sec:undec}
 
-As we said, if the refinement language can have arbitrary program expressions,
-we can not statically prove the soundness of a program. 
+In systems where the refinements can have arbitrary program expressions,
+we can create higher order predicates, thus the verification procedure is undecidable.
 %
-In this section we will present three ways to reason about such languages:
-\begin{itemize}
-\item Interactive theorem proving; where the proofs are statically created by the user
-\item Contracts Calculi; where the assertions are checked at run time
-\item Hybrid Type Checking; where the assertions are checked statically whenever possible
+There are many alternatives to reason in such languages, 
+in this section we will present three of them:
+Initially, we present \textit{Interactive theorem proving};
+where the proofs are statically created by the user.
+Then, we present \textit{Contracts Calculi}; 
+where the assertions are checked at run time.
+Finally, we present \textit{Hybrid Type Checking}; 
+where the assertions are checked statically whenever possible
 and dynamically when necessary.
-\end{itemize}
 
 
 
@@ -32,7 +62,7 @@ and dynamically when necessary.
 % intro
 
 One approach to verify that a program satisfies some 
-specifications is to statically prove them.
+specifications is the user to statically prove them.
 % 
 This approach is used by \textit{interactive theorem provers}, 
 such as 
@@ -48,9 +78,8 @@ the constructive proof of its formal specification.
 
 % overview 
 
-As an example, consider a function @pred@ in Coq, 
-that computes the predecessor of a positive number,
-and has type signature
+As an example, consider once again the @pred@ function
+that computes the predecessor of a positive number.
 
 @pred :: s:{n : nat | n > 0}  -> {v:nat | s = S v}@
 
@@ -68,11 +97,15 @@ its argument is positive.
 \end{itemize}
 
 % implementation
-
-In more details @pred@ function can be defined in Coq as follows \cite{cpdt}  
+\begin{figure}
 $$\centering
 \begin{tabular}{c}
 \begin{codeCoq}
+Inductive sig (A : Type) (P : A -> Prop) : Type :=
+    exist : forall x : A, P x -> sig P
+Notation
+  "{ x : A | P }" := sig (fun x : A => P)
+
 Definition pred (s : {n : nat | n > 0}) : {m : nat | proj1_sig s = S m} :=
   match s return {m : nat | proj1_sig s = S m} with
     | exist 0 pf => match zgtz pf with end
@@ -81,29 +114,27 @@ Definition pred (s : {n : nat | n > 0}) : {m : nat | proj1_sig s = S m} :=
 \end{codeCoq}
 \end{tabular}
 $$
+\caption{The pred function in Coq}
+\label{fig:coq}
+\end{figure}
 
-where the refinement type is syntactic sugar,
-defined in the standard library, for the type family @sig@:
 
-$$\centering
-\begin{tabular}{c}
-\begin{codeCoq}
-Inductive sig (A : Type) (P : A -> Prop) : Type :=
-    exist : forall x : A, P x -> sig P
-Notation
-  "{ x : A | P }" := sig (fun x : A => P)
-\end{codeCoq}
-\end{tabular}
-$$
-
+In Coq\cite{cpdt}
+the refinement type 
+is defined in the standard library, 
+and is syntactic sugar,
+for the type family @sig@.
+With this, one can define the @pred@ function,
+as presented in Figure \ref{fig:coq}.
 The function @pred@ takes an argument @s@ which has two components:
 a natural number @n@
 and a proof @pf@ that this number is positive.
-Then, there is a case analysis on @s@ and if @n@ is zero, then 
+There is a case analysis on @s@:
+If @n@ is zero, then 
 the proof @pf@ is used to reach a contradiction; thus this case can not occur.
 Otherwise, @n@ has a predecessor, say @n'@ and 
 the function returns @n'@ combined with a proof that its successor is 
-equal to @n@. This proof is constructed by applying @eq_relf@, the only constructor
+equal to @n@. This proof is constructed by applying @eq_refl@, the only constructor
 of equality to @S n'@.
 
 
@@ -120,9 +151,10 @@ Inductive eq (A:Type) (x:A) : A -> Prop :=
 \end{verbatim}
 \end{comment}
 
-As we said, at the call side of @pred@, the programmer should provide
+In the call side of @pred@, the programmer should provide
 both the argument and a proof that it is positive.
-As an example, we can have 
+As an example,
+if @two_gt0@ is a proof that two is greater than zero, we can have
 
 $$\centering
 \begin{tabular}{c}
@@ -132,7 +164,9 @@ pred (exist _ 2 two_gt0)
 \end{tabular}
 $$
  
-where @two_gt0@ is a proof that two is greater than zero.
+For this application to typecheck, Coq will check that
+the argument satisfies @pred@ precindition, or 
+@two_gt0@ is indeed a proof that @2@ is greater than 0. 
 
 \begin{comment}
 Theorem two_gt0 : 2 > 0.
@@ -165,28 +199,30 @@ when Eiffel \cite{Eiffel}, an object-oriented programming language,
 totally adopted assertions and developed the 
 ``Design by Contract'' philosophy \cite{Meyer92}.
 
+%In many systems contracts consist of a refinement type with a supersript:
 Contracts are of the form:
-\trefc{v}{\tau}{p}{l}
-and describe the values $v$, of type $\tau$
+\tref{v}{\tau}{p}{l}.
+The refinement part, as usual,  describes the values $v$, of type $\tau$
 that satisfy the predicate $p$. 
-The $l$ superscript is a \textit{blame label}, used to
+The $\mklabel{l}$ superscript is a \textit{blame label}, used to
 identify the source of failures.
 %
 As an example, 
-consider a contract for positive integers \trefc{v}{Int}{v>0}{l}
+consider a contract for positive integers \trefpos{l}
 applied to two values, $2$ and $0$: 
 \begin{align*}
-\trefc{v}{Int}{v>0}{l'}&\ 2 &&\rightarrow 2 \\
-\trefc{v}{Int}{v>0}{l}&\ 0  &&\rightarrow \Uparrow l
+\trefpos{l'}&\ 2 &&\rightarrow 2 \\
+\trefpos{l}&\ 0  &&\rightarrow \elabel{l}
 \end{align*}
 
 If the check succeeds, as in the case for $2$,
 then the application will return the value, so the first 
 application just returns $2$.
-If it fails, then the entire program will ``blame'' the label $l$,
-raising an uncatchable exception  $\Uparrow l$, pronounced ``blame $l$''.
+If it fails, then the entire program will ``blame'' the label $\mklabel{l}$,
+raising an uncatchable exception  \elabel{l}, pronounced ``blame $l$''.
 
 % higher-order 
+\begin{comment}
 Assigning blame for contractual violations in higher-order languages
 is complex:
 %
@@ -198,22 +234,22 @@ lie with the supplier of the bad value,
 no matter if the bad value was passed by directly applying 
 a function or by applying a base value.
 %
-
+\end{comment}
 In 2002, Findler and Felleisen in \cite{Findler02} were the first to
-to create a system for higher order languages with contracts.
+create a system for higher order languages with contracts.
 %
 In their system, the blame is properly assigned in the 
-higher-order components of the program via the 
+higher-order components of the program via a
 ``variance-contravariance`` rule.
 % Other features
 Moreover,
 they allow dependent contracts, i.e. 
-contracts that have the form of a dependent function type, 
+contracts that have the form of a refinement function type, 
 where the result can depend on the argument.
 Finally,
 they treat contracts as first class values, 
 i.e., contracts are values that can be passed to and from functions
-
+%
 In 2004, Blume and McAllester, at \cite{BlumeM06} noted that 
 in Findler and Felleisen system,
 the concept of contract satisfaction had not actually been defined
@@ -243,13 +279,13 @@ which tracks, for each value, the most recently checked contract.
 Hybrid types \cite{flanagan06} are a well-known example in this style; others include the
 work of Ou et al. \cite{Ou2004}, Wadler and Findler \cite{WadlerF09}, and Gronski
 et al. \cite{Gronski06}, Belo et al. \cite{Greenberg11} and Grennberg et al. \cite{Greenberg12}.
-
-In the next subsection we will discuss manifest contracts and
-how we can extend out core language to support them.
+%
+In the rest subsection we will discuss manifest contracts and
+present a core calculus that supports them.
 
 \subsubsection{Manifest Contracts}
 
-Manifest Contracts Systems, as presented in \cite{Greenberg12}, use casts,
+Manifest Contracts Systems\cite{Greenberg12}, use casts,
 \ecast{\tau_s}{\tau_t}{l}
 to convert values from the source type $\tau_s$ 
 to the target type $\tau_t$ and raise \elabel{l}
@@ -258,106 +294,108 @@ if the cast fails.
 As an example, consider a cast from integers to positives:
 
 $$
-\ecast{Int}{\{v:Int | v > 0\}}{l} \ n
+\ecast{\tyint}{\ttpos}{l} \ \texttt{n}
 $$
 
-The system should statically verify that the value $n$ is 
-of the source type $Int$.
-After the cast, the program can treat this value as
-if it has the target type $\{v:Int | v > 0\}$.
-At run-time, a check will be made that $n$ 
+The system should statically verify that the value @n@ is 
+of the source type @Int@.
+After the cast, this value is treated as
+if it has the target type \ttpos.
+At run-time, a check will be made that @n@ 
 is actually a positive integer and if it fails it will raise \elabel{l}.
 
 To generalize, for base contracts, a cast will behave just like a check on the target type: 
-applied to $n$, the cast either returns $n$ or raises \elabel{l} . 
-
-A function cast 
-$$
-(\ecast{\tau_{11} \rightarrow \tau_{12}}{\tau_{21} \rightarrow \tau_{22}}{l}
- \ f ) \ v
-$$
+applied to @n@, the cast either returns @n@ or raises \elabel{l} . 
+%
+A function application cast 
+$(\ecast{\tau_{11} \texttt{ -> } \tau_{12}}{\tau_{21} \texttt{ -> } \tau_{22}}{l} \ \texttt{f} ) \ \texttt{v}$
 will reduce to 
-$$
-\ecast{\tau_{12}}{\tau_{22}}{l}\ (f \ ((\ecast{\tau_{21}}{\tau_{11}}{l}) \ v))
-$$
-
-wrapping the argument v in a (contravariant) cast between the domain types
+$\ecast{\tau_{12}}{\tau_{22}}{l}\ (
+	\texttt{f} \ 
+	(
+		\ecast{\tau_{21}}{\tau_{11}}{l} 
+		\ \texttt{v}
+	)
+)$
+wrapping the argument @v@ in a (contravariant) cast between the domain types
 and wrapping the result of the application in a (covariant) cast between the
 codomain types.
 
-To better understand how function casts work lets go back to 
-our running example, \texttt{pred}:
-
-$$
-\texttt{pred} ::n:\{v:Int | v > 0\} -> \{v:Int | v = n - 1\} 
-$$
-
-To get this type signature for \texttt{pred}, we have to wrap the function's definition 
+To better understand how function casts work lets once more consider 
+the \predname\ example.
+%
+To get desired the type signature for \predname, 
+we have to wrap the function's definition 
 in a type cast:
-
 \begin{align*}
-& \texttt{pred'}\ x= x - 1 \\
-& \texttt{pred}  = \ecast{Int \rightarrow Int}{x:\{v:Int | v > 0\} -> \{v:Int | v = x - 1\}}{lpred} \ \texttt{pred'}
+& \prednamep\ x= x - 1 \\
+& \predname  = \ecast{\tyint \texttt{->} \tyint}{x:\ttpos \texttt{->} \ttpred{x}}{lpred} \ \prednamep
+\end{align*}
+If we apply a positive number, say @2 :: {v:Int | v > 0}@, we will have the following computation:
+%
+\begin{align*}
+\predname\ \texttt{2} &=
+(\ecast{\tyint \texttt{->} \tyint}{x:\ttpos \texttt{->} \ttpred{x}}{lpred} \ \prednamep)\ \texttt{2} \\
+&\rightarrow^\star (\ecast{\tyint}{\ttpred{2}}{lpred}) \ (\prednamep(\ecast{\ttpos}{\tyint}{lpred}\texttt{2})) \\ 
+&\rightarrow^\star (\ecast{\tyint}{\ttpred{2}}{lpred}) \ (\prednamep\ \texttt{2}) \\ 
+&\rightarrow^\star (\ecast{\tyint}{\ttpred{2}}{lpred}) \ \texttt{1} \\ 
+&\rightarrow^\star \texttt{1} \\ 
 \end{align*}
 
-
-Now, when we apply a positive number, say $2 :: \{v:Int | v > 0\}$, we will have the following computation:
-
+The first line is @pred@'s definition. In the second line the rule for functional cast is applied.
+Then, the check that @2@ is an integer succeeds, and @2@ is applied to \prednamep
+so, we get @1@.
+Finally, this result is checked to be @1@ and since this check succeeds the value is returned.
+%
+If \prednamep was not returning the correct value, the program would raise a blame:
 \begin{align*}
-\texttt{pred}\ 2 &=
-(\ecast{Int \rightarrow Int}{x:\{v:Int | v > 0\} -> \{v:Int | v = x - 1\}}{lpred} \ \texttt{pred'})\ 2 \\
-&\rightarrow^\star (\ecast{Int}{\{v:Int | v = 2 - 1\}}{lpred}) \ (\texttt{pred'}\ (\ecast{\{v:Int | v > 0\}}{Int}{lpred} \ 2)) \\ 
-&\rightarrow^\star (\ecast{Int}{\{v:Int | v = 2 - 1\}}{lpred}) \ (\texttt{pred'}\ 2) \\ 
-&\rightarrow^\star (\ecast{Int}{\{v:Int | v = 2 - 1\}}{lpred}) \ 1 \\ 
-&\rightarrow^\star 1 \\ 
-\end{align*}
-
-Thus, if \texttt{pred'} was not returning the correct value, the program would raise a blame:
-\begin{align*}
-\texttt{pred'}\ & x= 0 \\
-\texttt{pred}\ 2 &=
-(\ecast{Int \rightarrow Int}{x:\{v:Int | v > 0\} -> \{v:Int | v = x - 1\}}{lpred} \ \texttt{pred'})\ 2 \\
-&\rightarrow^\star (\ecast{Int}{\{v:Int | v = 2 - 1\}}{lpred}) \ (\texttt{pred'}\ (\ecast{\{v:Int | v > 0\}}{Int}{lpred} \ 2)) \\ 
-&\rightarrow^\star (\ecast{Int}{\{v:Int | v = 2 - 1\}}{lpred}) \ (\texttt{pred'}\ 2) \\ 
-&\rightarrow^\star (\ecast{Int}{\{v:Int | v = 2 - 1\}}{lpred}) \ 0 \\ 
+\prednamep\ & x= 0 \\
+\predname\ \texttt{2} &=
+(\ecast{\tyint \texttt{->} \tyint}{x:\ttpos \texttt{->} \ttpred{x}}{lpred} \ \prednamep)\ \texttt{2} \\
+&\rightarrow^\star (\ecast{\tyint}{\ttpred{2}}{lpred}) \ (\prednamep\ (\ecast{\ttpos}{\tyint}{lpred} \ \texttt{2})) \\ 
+&\rightarrow^\star (\ecast{\tyint}{\ttpred{2}}{lpred}) \ (\prednamep\ \texttt{2}) \\ 
+&\rightarrow^\star (\ecast{\tyint}{\ttpred{2}}{lpred}) \ \texttt{0} \\ 
 &\rightarrow^\star \elabel{lpred} \\ 
 \end{align*}
-
-
-
+The evaluation is the same as in the previous example, 
+up to the point where the \prednamep application returns.
+Here, the application returns @0@, thus the final check fails 
+and the program raises a blame.
 
 % testing the argument
-You may notice, that in both cases, \texttt{pred'} is applied to a ``casted'' value
-$\ecast{\{v:Int | v > 0\}}{Int}{lpred} \ 2$.
-This is a downcast: the system statically knows the source type of $2$, i.e., 
-$\{v:Int | v > 0\}$ and at runtime it is checked that $2$ is an $Int$.
-Thus, for an application to statically typecheck, the argument should 
-have a refined type and the only way to get a refined type is though a cast.
-But, if we cast a non-positive value to be positive,
-then this cast will fail:
+You may notice, that in both cases, \texttt{pred'} is applied to a 
+positive integer.
+Since a positive integer is not a primitive type, 
+the only way to get such a type is via a cast.
+Thus, for this application to statically typecheck, the argument should 
+be wrapped in a cast.
+But, if we cast a non-positive value to be be positive,
+then the cast will fail:
 
 \begin{align*}
-\texttt{pred} \ ((\ecast{Int}{\{v:Int | v > 0\}}{zero})\ 0) &= \elabel{zero}
+\predname \ ((\ecast{\tyint}{\ttpos}{zero})\ \texttt{0}) &= \elabel{zero}
 \end{align*}
 
+We saw that two distinct casts should be used to satisfy the functions pre- and post-conditions.
+These casts use different labels, with which we can track the source of failure, if any.
 
 \subsubsection{Formal Language}
-Lets now extend our core calculus $\lambda_c$ to $\lambda_cc$,
+Lets now extend our core calculus $\lambda_c$ to $\lambda_{cc}$,
 so that it supports manifest contracts.
 %
 In the expressions of our language we should add a blaming expression
-and a type casting.
+and a type cast.
 As a refinement the language can use any core expression.
 Everything else remains unchanged.
 
 
 In the typing judgements we add two rules:
-a blame expression can have any well formed types, 
-while a type casting expression behaves as a function from the 
+a blame expression can have any well formed type, 
+while a type cast expression behaves as a function from the 
 source to the target type.
 For a casting expression to typecheck, both types should be 
 well formed and compatible, i.e., their unrefined types should be 
-the same. We check this through a new compatibility judgement.
+the same. We check this with a new compatibility judgement.
 
 \begin{figure}[ht!]
 \centering

@@ -71,15 +71,15 @@ and can appear in the refinement of the result.
 %Dependent types, allow the refinement of the result of a function
 %to depend on function's arguments.
 As an example, we define a @pred@ function, 
-that takes an argument @n@ and returns the predecessor of @n@,
+that takes as argument a positive integer @n@ and returns the predecessor of @n@,
 and give it a very descriptive type:
 
 $$\centering\begin{tabular}{c}\begin{code}
-pred :: n : Int -> {v:Int | v = n-1}
+pred :: n : {v:Int | v > 0} -> {v:Int | v = n-1}
 pred n = n-1
 \end{code}\end{tabular}$$
 
-This type expresses that for each integer argument @n@, 
+This type expresses that for each positive integer argument @n@, 
 the result is an @Int@ exactly equal to @n-1@.
 When @pred@ is applied to a concrete value, 
 the parameter @n@ is substituted with this value.
