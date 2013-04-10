@@ -106,6 +106,9 @@ max [even] n m :: {v:Int |  even v}
 This is the basic concept of abstract refinements, which , as we will see have many applications.
 
 \subsection{Inductive Refinements}
+As a first application we present, how abstract refinements 
+allow us to formalize induction within the type system.
+
 Consider a @loop@ function that takes as arguments
 a function @f@, an integer @n@, 
 a base case @z@ and applies 
@@ -121,80 +124,73 @@ loop f n z = go 0 z
 \end{code}
 \end{tabular}$$
 
-We can use inductive reasoning for this function, as
-\begin{itemize}
-\item For any \textit{loop invariant} @R :: (Int, a)@
-that relates the loop iteration @i@ with the accumulator @acc@
-\item\textbf{Base Case} If @R(0, z)@ holds, thus if @z@ satisfies the
-loop iteration at @0@.
-\item\textbf{Inductive Step} If @R(i, acc)@$\Rightarrow$@R(i+1, f i acc)@ holds; 
-thus, if the function @f@ preserves the loop invariant.
-\item\textbf{Conclusion} Then @R(n, loop f n z)@ holds; thus @loop@'s result 
-satisfies the invariant at @n@.
-\end{itemize}
-
-We can use an abstract refinement @r :: Int -> a -> Prop@, 
-that relates the loop iteration @i@ with the accumulator @acc@, 
-to encode the loop invariant @R@.
-With this, we give @loop@ a type that actually encodes induction:
-
-$$\centering
-\begin{tabular}{c}
-\begin{code}
-loop :: forall <r :: Int -> a -> Prop> .
-           f : (i:Int -> a<r i> -> a<r (i+1)>) 
-        -> n : {v:Int | n >=0} 
-        -> z : a<r 0> 
-        -> a<r n>
-\end{code}
-\end{tabular}$$
-
-This type says that for any invariant @r@, 
-if the function @f@ preserves the invariant,
-@n@ is a natural number and @z@ satisfies the invariant at @0@,
-then @loop@'s result will satisfy the invariant at @n@.
-
 Now, consider a user function @incr@ that uses @loop@
 and at each iteration increases the accumulator by one:
 $$\centering
 \begin{tabular}{c}
 \begin{code}
 incr :: Int -> Int -> Int
-incr n z = loop g n z
-  where g i acc = acc + 1
+incr n z = loop f n z
+  where f i acc = acc + 1
 \end{code}
 \end{tabular}$$
 
-In this case, the invariant is that at each iteration @i@,
-the accumulator is equal to @i + z@, or $R(i, acc) \Leftrightarrow acc = i + z$.
-If we instantiate the abstract refinement in @loop@ with this concrete refinement, 
-we get a concrete refinement type for @loop@:
+The accumulator is initialized with @z@ and at each @loop@'s iteration
+it is increased by @1@. So, at the @i@th iteration, the accumulator is equal to 
+@z+i@. There will be @n@ iterations, thus he final result will be @z+n@.
+%
+This reasoning constitutes an inductive proof that characterizes @loop@'s behaviour,
+but it is unclear how to give @loop@ a (first-order) refinement type that captures
+this behaviour.
+Hence, it has not been possible to verify that @incr@ result actually adds its two arguments.
 
+\mypara{Typing loop}
+Abstract refinements allow us to solve this problem, 
+while remaining within the boundaries of SMT-based decidability.
+We give @loop@ the following type:
 $$\centering
 \begin{tabular}{c}
 \begin{code}
-loop [\i acc -> acc = i + z] 
-        :: f : (i:Int -> {v:a | v = i+z} -> {v:a | v = i+1+z}) 
-        -> n : {v:Int | n >=0} 
-        -> z : {v:a | v = z} 
-        -> {v:a | v = n + z}
+loop :: forall <r :: Int -> a -> Bool> .
+           f : (i:Int -> a<r i> -> a<r (i+1)>) 
+        -> n : {v:Int | n >= 0} 
+        -> z : a<r 0> 
+        -> a<r n>
 \end{code}
 \end{tabular}$$
+The trick is to qualify over the invariant @r@ that @loop@
+establishes between the loop iteration and the accumulator.
+Then the type signature encodes induction on natural numbers:
+(1) @n@ should be a natural number, thus a non-negative integer,
+(2) the base case @z@ should satisfy the invariant at 0,
+(3) in the inductive step, @f@ 
+uses the the old accumulator to create the new one, thus
+if the accumulator satisfies the invariant on the iteration @i@,
+the new one, as constructed by @f@ should satisfy the invariant at @i+1@.
+If all these hold, we conclude that the result satisfies the invariant at @n@.
+This scheme is not novel\cite{coq-book}; what is new is the encoding, via uninterpreted 
+predicate symbols in a SMT-decidable refinement type system.
 
-We can prove that @loop@'s precondition is satisfied by @g@, 
-thus, we can apply it to @loop@ and get @incr@'s type:
-$$\centering
+\mypara{Using loop}
+We can use this expressive type of @loop@ to verify inductive properties of
+user functions:
+$$
 \begin{tabular}{c}
 \begin{code}
-incr :: n : {v:Int | n >= 0} 
-     -> z : Int 
-     -> {v:Int | v = n + z}
+incr :: n:{v:Int|v >= 0} -> z:Int -> {v:Int|v = n + z}
+incr n z = loop [{\i acc -> acc + i}] f n z
+  where f i acc = acc + 1
 \end{code}
 \end{tabular}$$
 
-This type better describes @incr@'s behaviour, 
-as it states that if we apply @incr@ any natural number @n@
-and any integer @z@, we will get @n + z@.
+Where the expression in brackets denotes 
+the instantiation of the abstract refinements.
+For purpose of illustration 
+we make abstract refinement instantiation explicit, 
+but in \cite{Vazou13} it can be automatically inferred via liquid typing.
+Moreover, 
+in \cite{Vazou13} we present how this inductive reasoning 
+can be applied to reason about structural inductive properties in lists.
 
 \subsection{Function Composition}
 
