@@ -1,16 +1,24 @@
 \section{Abstract Refinement Types}\label{sec:abstract}
 
-In this section, we present abstract refinement types which enable quantification over
-the refinements of data- and function-types. 
+As we saw so far, refinement type systems fall in two categories.
+Expressive types systems, like the ones presented in section \ref{sec:undec}, 
+are statically undecidable; while decidable systems, like those discussed in section \ref{sec:liquid} 
+should restrict the refinement language in a subset on first order logic.
 %
-The key insight is that we can avail
-of quantification while preserving SMT-based decidability, simply by encoding
+In this section, we present abstract refinement types\cite{Vazou13},
+a means to increase expressiveness of a refinement system,
+while preserving SMT-based decidability.
+%
+The key insight is that we avail 
+quantification over
+the refinements of data- and function-types,
+simply by encoding
 refinement parameters as uninterpreted propositions within the refinement logic.
 We illustrate how this mechanism yields a variety of sophisticated means for
 reasoning about programs, including: 
-index-dependent refinements for reasoning about key-value maps,
-recursive refinements for reasoning about recursive data types, and 
-inductive refinements for reasoning about higher-order traversal routines. 
+inductive refinements for reasoning about higher-order traversal routines,
+index-dependent refinements for reasoning about key-value maps, and
+recursive refinements for reasoning about recursive data types.
 
 \subsection{The key idea}
 Consider the monomorphic @max@ function on @Int@ values.
@@ -27,11 +35,12 @@ max x y = if x > y then x else y
 With this type signature, if we apply @max@ to two positive integers, 
 say @n@ and @m@, we can get that the result is grater or equal to both 
 of them, as @max n m :: {v:Int | v >=n && v >=m}@.
-But we can not reason about other properties: 
+But we can not reason about some arbitrary property: 
 If we apply @max@ to two even numbers, can not verify that the result is 
 also even.
 %
-Thus, even though we have the information on the input, we lose it on the result.
+Thus, even though we have the information that both arguments are even on the input, 
+we lose it on the result.
 
 To solve this problem, we introduce \emph{abstract refinements} 
 which let us 
@@ -65,23 +74,39 @@ refinement
 after which type checking proceeds as usual. 
 %
 As an example, suppose that we call @max@ with two even numbers:
-
-@n :: {v:Int | v % 2 = 0}@,
-@m :: {v:Int | v % 2 = 0}@,
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+n :: {v:Int | even v}
+m :: {v:Int | even v}
+\end{code}
+\end{tabular}$$
 
 Then, the abstract refinement can be instantiated with a concrete predicate 
-@{\v -> v % 2 = 0}@, 
+@even@, 
 which will give @max@ the type
-@max [{\v -> v % 2 = 0}] :: {v:Int |  v % 2 = 0} -> {v:Int |  v % 2 = 0} -> {v:Int |  v % 2 = 0}@
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+max [even] :: 
+{v:Int | even v} -> {v:Int | even v} -> {v:Int | even v}
+\end{code}
+\end{tabular}$$
+where the expression in brackets is the refinement instantiation.
 % 
-Since both @n@ and @m@ are even numbers we can verify that the
-preconditions hold, so the result will also be even:
-@max [{\v -> v % 2 = 0}] n m :: {v:Int |  v % 2 = 0}@.
+Since both @n@ and @m@ are even numbers we can apply them to the 
+above function, and get an even result:
+$$\centering
+\begin{tabular}{c}
+\begin{code}
+max [even] n m :: {v:Int |  even v}
+\end{code}
+\end{tabular}$$
 
 This is the basic concept of abstract refinements, which , as we will see have many applications.
 
 \subsection{Inductive Refinements}
-Consider a @loop@ function that takes 
+Consider a @loop@ function that takes as arguments
 a function @f@, an integer @n@, 
 a base case @z@ and applies 
 the function @f@ to the @z@, @n@ times:
