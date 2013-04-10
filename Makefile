@@ -20,6 +20,9 @@ all:
 	bibtex main
 	pdflatex main
 
+count:
+	pdftotext main.pdf -| tr -d '.' | wc -w
+
 clean:
 	$(RM) *.log *.aux *.ps *.dvi *.bbl *.blg *.bak *.fdb_latexmk *~
 

@@ -17,6 +17,7 @@ refinement parameters as uninterpreted propositions within the refinement logic.
 We illustrate how this mechanism yields a variety of sophisticated means for
 reasoning about programs, including: 
 inductive refinements for reasoning about higher-order traversal routines,
+compositional refinements for reasoning about function composition,
 index-dependent refinements for reasoning about key-value maps, and
 recursive refinements for reasoning about recursive data types.
 
@@ -194,21 +195,25 @@ can be applied to reason about structural inductive properties in lists.
 
 \subsection{Function Composition}
 
-As a next example, we will see how one can use abstract refinements
+As a next example, we present how one can use abstract refinements
 to reason about function composition.
 
-Consider a @plusminus@ function that composes a plus and a minus function:
-
+Consider a @plusminus@ function that composes a plus and a minus operator:
 $$\centering
 \begin{tabular}{c}
 \begin{code}
-plusminus :: n:Int -> m:Int -> x:Int -> {v:Int | v = (x - m) + n}
+plusminus :: n:Int 
+          -> m:Int 
+          -> x:Int 
+          -> {v:Int | v = (x - m) + n}
 plusminus n m x = (x - m) + n
 \end{code}
 \end{tabular}$$
-
-However, consider an alternative definition that uses function composition @(.)@
-
+In a first order refinement system we can verify that the function's behaviour
+is captured by its type.
+%
+However, consider an alternative definition that uses function composition 
+@(.) :: (b -> c) -> (a -> b) -> a -> c@.
 $$\centering
 \begin{tabular}{c}
 \begin{code}
@@ -217,31 +222,38 @@ plusminus n m x = plus . minus
         minus x = x - m
 \end{code}
 \end{tabular}$$
-
-It is unclear how to give @(.)@ a first order refinement type that
+It is unclear how to give @(.)@ a (first-order) refinement type that
 expresses that the result can be refined with the composition of the
 refinements of both arguments results.
 
+\mypara{Typing function composition}
 To solve this problem, we can use abstract refinements and give @(.)@ a type:
-
 $$\centering
 \begin{tabular}{c}
 \begin{code}
-(.) :: forall < p :: b -> c -> Prop 
-              , q :: a -> b -> Prop>.
+(.) :: forall < p :: b -> c -> Bool
+              , q :: a -> b -> Bool>.
        f : (x:b -> c<p x>)
     -> g : (x:a -> b<q x>)
     -> x : a
     -> exists[z:b<q x>]. c<p z>
 \end{code}
 \end{tabular}$$
+The trick is once again to quantify the type over 
+refinements we care about.
+This time, we use two abstract refinements:
+the refinement @p@ of the result of the first function @f@
+and the refinement @q@ of the result of the second function @g@.
+For any argument @x@, we use an existential to bind the intermediate result to @z = g x@, 
+so @z@ satisfies @q@ at @x@, 
+and the result satisfies @p@ at the intermediate result.
 
-This type abstracts over the refinement @p@ of the result of the first function @f@
-and the refinement @q@ of the result of the second function @g@
-and for any argument @x@, the intermediate result is binded to @z = g x@, 
-so @z@ satisfies @q@ at @x@, and returns a value that satisfies @p@ at the intermediate result.
+\mypara{Using function composition}
+With this type for function composition,
+user functions get the concrete refinement of the final result
+to be the composition of the two refinements of the argument functions.
 
-So back to @plusminus@ example, with the appropriate instantiation we get 
+Back to @plusminus@ example, with the appropriate refinement instantiation we get 
 the concrete refinement type for function composition:
 $$\centering
 \begin{tabular}{c}
@@ -253,8 +265,13 @@ $$\centering
     -> exists[z:{v:b | v = x-m}]. {v:c | v = z+n}
 \end{code}
 \end{tabular}$$
+The result type asserts that there exists a value @z@,
+which is indeed the intermediate result, with the property @z = x - m@.
+With this, the final result is equal to @z + n@.
+If our logic supports equality , as SMT solvers do, 
+we can verify that the final result is indeed equal to @(x - m) + n@.
+In other words, we can verify the desired type of @plusminus@. 
 
-With this type, it is straightforward to prove the type of @plusminus@. 
 \subsection{Index-Dependent Invariants}\label{sec:overview:index}
 
 Next, we illustrate how abstract invariants allow us to 
@@ -297,32 +314,43 @@ as a vector of @Char@ defined on a range @[0, n)@
 with its last element equal to the terminating character:
 
 $$\centering\begin{tabular}{c}\begin{code}
-Vec <{\v -> 0 <= v < n }, {\i v -> i = n-1 => v = `\0`}> Char
+Vec <{\v -> 0 <= v < n}
+    ,{\i v -> i = n-1 => v = `\0`}> Char
 \end{code}\end{tabular}$$
 
-Finally, we can encode a Fibonacci memoization vector, that is defined
+Finally, we can encode a \textit{Fibonacci memoization vector}, that is defined
 on positive integers and its value on index @i@ is either zero
 or the @i@th Fibonacci, and we can use this vector to efficiently compute
 a Fibonacci number:
 
 $$\centering\begin{tabular}{c}\begin{code}
-Vec <{\v -> 0 <= v }, {\i v -> v != 0 => v = fib(i)}> Char
+Vec <{\v -> 0 <= v}
+    ,{\i v -> v != 0 => v = fib(i)}> Char
 \end{code}\end{tabular}$$
 
 \mypara{Using Vectors}
-To use the vectors, first we have to type vector operations, like 
-set, get and empty, the appropriate types, which actually means 
-to abstract over the domain and the range predicates. 
+A first step towards using vectors is 
+to supply the appropriate types 
+for vector operations, like 
+set, get and empty.
+This usually means qualifying
+over the domain and the range of the vectors. 
 %
-Then, we have to specify the properties we are interested about, 
+Then, the programmer has to specify interesting vector properties, 
 as we did for the Fibonacci memoization, or the null terminating string.
 % 
-Finally, we can verify that user function, that transforms the vestors
+Finally, the system can verify that user function, that transforms vectors
 preserve these properties.
+%
+This procedure is applied in \cite{Vazou13},
+where using appropriate types for vector operations,
+we reason about functions that transform Null Terminating Strings
+or efficiently compute a Fibonacci number.
+%
+
 
 \subsection{Recursive Invariants}
-
-Next, we turn our attention to recursively defined datatypes, and show 
+Finally, we turn our attention to recursively defined datatypes, and show 
 how abstract refinements allow us to specify and verify high-level
 invariants that relate the elements of a recursive structure.
 Consider the following refined definition for lists:
@@ -387,6 +415,32 @@ convenient for verifying complex sorting implementations like that of
 @Data.List.sort@ which, for efficiency, use lists with different 
 properties (\eg increasing and decreasing).
 
+\subsection{Implementation}
+We implemented abstract refinements in HSolve, 
+a tool that uses liquid types as a base refinement system.
+HSolve takes an input a haskell source code and some specifications.
+If it can prove that the code satisfies the specifications, 
+it returns \textit{Safe} combined with the code annotated with the inferred
+refinement types.
+Otherwise, it returns \textit{UnSafe}, combined with the source location 
+that could not be verified.
+
+In the tool abstract refinements appear only on type specifications
+and are transparent for the haskell code.
+Refinement abstraction inserts a variable which is treated as an uninterprented functions
+symbol by the SMT solver. 
+In refinement application the concrete refinement is inferred via liquid 
+type variables; thus the user should not explicitly annotate the code with refinement instantiations.
+
+
+We use the tool to verify 
+some benchmarks, among which ghc official sorting algorithm on lists
+and two ghc libraries (Data.Map.Base and Data.Set.Splay) that reason about Binary Search Trees.
+The specification invariants are usually simple, as abstract refinements
+greatly simplify writing specifications for the majority of interface or public functions.
+Moreover, the verification procedure required only a few code modifications, 
+which include reordering arguments or inserting ghost variables, 
+to make explicit values over which various invariants depend.
 
 \subsection{Formal Language}
 We suggest that any refinement system can be extended with abstract refinements
@@ -405,20 +459,24 @@ include abstract refinements, applies to program expressions
 The types of the language should also be extended to include 
 refinement abstraction.
 %
-Finally, two typing rules should be added for the two new expressions:
-The refinement abstraction expression is typed as an refinement abstraction
-type, in a straightforward way.
-In the refinement application, the abstract refinement $\pi$ is replaced with a concrete one
-over the type $\tau$
 
-We have to note that
-Abstract refinements 
+Since we extended our expressions the relevant typing rules should be added:
+The refinement abstraction expression is typed as an refinement abstraction
+type: the abstract refinement is treated as a variable
+and the checking proceeds in a straightforward way.
+In the refinement application, the abstract refinement $\pi$ is replaced with a concrete one
+over the type $\tau$. A formal definition of this substitution can be found in our paper.
+
+Similarly, since we extended our types, the wellformdness and subtyping 
+rules should be extended.
+In both cases, the abstract refinement is added in the environment
+and the check proceeds in a straightforward way.
+
+We note that
+abstract refinements 
 can be treated as uninterprented functions in the implication
 checking algorithm, thus the complexity of the system is not increased.
 Moreover, they appear only in the types, thus they can be erased in run-type.
-Finally, in \cite{Vazou13} refinement abstraction and application can be inferred, 
-thus the user does not have to actually alter the program
-and annotate it with explicit refinement instantiations.
 \begin{figure}[ht!]
 \centering
 $$
@@ -472,6 +530,14 @@ $$\begin{array}{cc}
     }
     [\tpinst]
 \end{array}$$
-\caption{\textbf{Static Semantics: Well-formedness, Subtyping and Type Checking}}
+
+\medskip \judgementHead{Subtyping}{\isSubType{\Gamma}{\tau}{\tau}}
+$$
+\inference
+   {(\Gamma, v:b \vdash \texttt{Valid}(p_1 \Rightarrow p_2))}
+   {\isSubType{\Gamma}{\tref{b}{p_1}}{\tref{b}{p_2}}}
+   [\tsubBase]
+$$
+\caption{\textbf{Static Semantics} from $\lambda_C$ to $\lambda_A$}
 \label{fig:rules}
 \end{figure}
