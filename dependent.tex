@@ -21,7 +21,7 @@ Thus, the type system is unable to statically ensure the safety of critical oper
 such as a division by i. 
 %
 Several authors have proposed the
-use of refinement types \cite{FreemanPfenning91} as a mechanism for enhancing the
+use of refinement types \cite{FreemanPfenning91, flanagan06, LiquidPLDI08, Greenberg12} as a mechanism for enhancing the
 expressiveness of type systems. 
 
 \textit{Refinement types} refine a vanilla type with a predicate.
@@ -32,27 +32,27 @@ i :: {v:Int | v != 0}
 \end{code}
 \end{tabular}$$
 
-that describes all values @v@ of type @Int@,
-moreover, the refinement predicate constraints 
-the value @v@ to be different than @0@.
+that describes a value @v@ of type @Int@,
+while, the refinement constraints 
+this value @v@ to be different than @0@.
 
 
 One can use this refinement type to define a safe division operator:
-
+%
 $$\centering\begin{tabular}{c}
 \begin{code}
 safeDiv :: Int -> {v:Int | v != 0} -> Int
 \end{code}
 \end{tabular}$$
-
-This type expresses the fact that the division operator takes two
+%
+This type captures that the division operator takes two
 @Int@ arguments and returns an @Int@.
-Moreover restricts the second argument to be different that
+Moreover, it restricts the second argument to be different that
 zero, to eliminate division by zero operations. 
 
-When the function @safeDiv@ is called, 
+At the call side of @safeDiv@ 
 the type system should check that the real arguments do not
-violate @safeDiv@'s specification.
+violate its specification.
 %
 For instance, 
 @safeDiv 8 9@ is safe, since @9@ is always different that zero.
@@ -62,23 +62,24 @@ Apart from concrete values, @safeDiv@ can be applied to arbitrary program expres
 @m@ is an integer different than zero.
 
 \mypara{Refinement Function Types}
-Refinement function types, allow the specification of the 
-result to depend on the arguments.
+Refinement function types\cite{cayenne, flanagan06}, allow the specification of the 
+result to depend on the argument.
 %
-Parameters are used to bind function arguments
+A parameter is used to bind the argument
 and can appear in the refinement of the result.
 %
 %Dependent types, allow the refinement of the result of a function
 %to depend on function's arguments.
 As an example, we define a @pred@ function, 
-that takes as argument a positive integer @n@ and returns the predecessor of @n@,
-and give it a very descriptive type:
-
+that takes as argument a positive integer @n@ and returns the its predecessor.
+Refinement function types allow us to give @pred@ a type
+that exactly captures this behaviour:
+%
 $$\centering\begin{tabular}{c}\begin{code}
 pred :: n : {v:Int | v > 0} -> {v:Int | v = n-1}
 pred n = n-1
 \end{code}\end{tabular}$$
-
+%
 This type expresses that for each positive integer argument @n@, 
 the result is an @Int@ exactly equal to @n-1@.
 When @pred@ is applied to a concrete value, 
@@ -88,7 +89,7 @@ Thus, for each concrete argument, the result should be the predecessor
 of this argument.
 
 \mypara{Verification}
-The \textit{verification} is a procedure that takes an input 
+\textit{Verification} is a procedure that takes as input 
 a program, i.e.,  definitions for functions and values,
 and some specifications, i.e., refinement type signatures for functions and values,
 and decides whether the specifications hold for the program.
@@ -96,7 +97,7 @@ and decides whether the specifications hold for the program.
 Informally, it checks that 
 each expression satisfies its type, 
 for example, the @pred@ definition actually returns the 
-predecessor of its argument
+predecessor of its argument,
 or that 
 at each function application the arguments satisfy
 the function's preconditions, 
@@ -110,11 +111,11 @@ treat functions as first order objects.
 Thus, one can use functions in refinements and 
 create higher-order predicates. 
 For instance, the following type
-
+%
 $$\centering\begin{tabular}{c}\begin{code}
 f:(a->b) -> {v:Bool|terminates f}
 \end{code}\end{tabular}$$
-
+%
 describes that an arbitrary functional argument
 should satisfy a predicate @terminates@.
 %
@@ -141,20 +142,22 @@ Finally, we conclude.
 
 \section{Preliminaries}\label{subsec:formal}
 
-To be able to formally describe and compare the type systems, 
-we will define a a core calculus $\lambda_C$, its syntax and type system:
+To formally describe and compare type systems, 
+we define a core calculus, following \cite{flanagan06, LiquidPLDI08, Greenberg12}.
+We refer to our calculus as $\lambda_C$, 
+and in this section we present its syntax and type system.
 
 \subsection{Syntax}
-The syntax of expressions and types is summarized in Figure \ref{fig:syntax}.
+The syntax of expressions and types is summarized in Figure \ref{fig:coresyntax}.
 $\lambda_C$ expressions include variables, constants,
 typed $\lambda$-abstractions
 and function applications. 
 %
-Constants can be primitive integers, 
-$0, 1, 2, \dots$ or primitive booleans: \texttt{true} or \texttt{false}
-and can take basic types, such as integer or boolean.
+Constants include primitive integers:
+$0, 1, 2, \dots$ and primitive booleans: \texttt{true} or \texttt{false},
+which take the basic types, integer and boolean, respectively.
 %
-A basic type can be refined with a predicate and construct a basic
+A basic type can be refined with a predicate to construct a basic
 refinement type.
 Refinement types also contain function types, 
 in which, 
@@ -164,9 +167,10 @@ so that the result refinement can refer to it.
 The predicate $p$ is
 not yet defined. 
 As noted earlier, if $p$ contains arbitrary program 
-expressions, the type system is undecidable, but we 
-will present systems, where $p$ is restricted.
-
+expressions, the type system is undecidable, but 
+$p$ can be restricted in such a way as to render 
+the type system decidable.
+%
 Finally, we define a typing environment $\Gamma$, that maps variables to their type,
 and will be used in the rules.
 
@@ -200,7 +204,7 @@ $$
 %  \spmid \alpha
   \\[0.05in]
 
-\emphbf{Dependent Types} \quad 
+\emphbf{Refinement Types} \quad 
   & \tau 
   & ::= 
   &      \tref{b}{p} 
@@ -216,13 +220,13 @@ $$
 \end{array}
 $$
 \caption{\textbf{Syntax of $\lambda_C$}}
-\label{fig:syntax}
+\label{fig:coresyntax}
 \end{figure}
 
 
 
 \subsection{Typing}
-The typing rules used by $\lambda_C$ are summarized in Figure \ref{fig:rules}.
+The typing rules used by $\lambda_C$ are summarized in Figure \ref{fig:corerules}.
 
 % \subsubsection*{typing}
 \mypara{Type Checking}
@@ -251,7 +255,7 @@ i.e., its refinements are valid predicate expressions.
 %
 Finally, the rule \tapp checks that in an application \eapp{e_1}{e_2}
 the expression $e_1$ has a function type
-whose argument has the type of the argument $e_2$.
+whose argument is the type of the argument $e_2$.
 %
 As we discussed in the introduction, in the final type,
 the parameter $x$ should be replaced with the actual argument $e_2$.
@@ -268,8 +272,7 @@ We write \isWellFormed{\Gamma}{\tau} and create one rule for each type.
 The rule \wtBase checks that in a basic refinement type,  
 the refinement is a valid boolean expression.
 The environment of this check is extended with the value that is refined;
-as an example, consider 
-we should check that \tref{\texttt{int}}{v > 0} is valid, 
+for instance, to check the validity of \tref{\texttt{int}}{v > 0}, 
 we check that $v > 0$ is a boolean expression, in an 
 environment where $v$ is an integer value.
 %
@@ -281,7 +284,7 @@ in an environment extended with the argument parameter.
 \mypara{Subtyping rules}
 Consider that the predefined type for the integer $2$
 is an integer that is exactly equal to $2$.
-The type system, can check,via the rule \tconst , that 
+The type system can check,via the rule \tconst , that 
 \hastype{\emptyset}{2}{\tref{\texttt{int}}{v = 2}}.
 If $2$ is applied to a function that expects a
 positive integer, say $f::\tfun{x}{\tref{\texttt{int}}{v>0}}{\tau}$,
@@ -400,9 +403,6 @@ $$
 	  {\tfun{x_2}{\tau_{21}}{\tau_{22}}}
 }[\tsubFun]
 $$
-
-
-
 \caption{\textbf{Static Semantics for $\lambda_C$}}
-\label{fig:rules}
+\label{fig:corerules}
 \end{figure}
