@@ -292,7 +292,7 @@ the type system should also check that
 \hastype{\emptyset}{2}{\tref{\texttt{int}}{v > 0}}.
 %
 There are many ways for this check to succeed.
-We will present \textit{syntactic subtyping},
+We follow \textit{syntactic subtyping},
 in which subtyping reduces to implication checking.
 In our example, $v = 2 \Rightarrow v > 0 $ implies 
 $\tref{\texttt{int}}{v=2} \preceq \tref{\texttt{int}}{v>0}$.
@@ -311,19 +311,18 @@ Firstly,
 it checks that the basic type is the same in the two types.
 Moreover, it checks that under the environment $\Gamma$, 
 the left hand side refinement implies the right hand side.
-The implpication checking is enforced by a predicate \texttt{Valid} 
+The implication checking is enforced by a predicate \texttt{Valid} 
 which varies between the systems that we will describe.
 %
 The rule \tsubFun relates two function types according to the contravariant rule.
 
 
-In the rest of this paper, we will the core calculus $\lambda_C$
-upon which we will build a subset of four typing systems\cite{TODO}.
+In the rest of this paper, we will use the core calculus $\lambda_C$
+upon which we will build a subset of three typing systems\cite{ LiquidPLDI08, Greenberg12, Vazou13}.
 
 
 \begin{figure}[ht!]
 \medskip \judgementHead{Type Checking}{$\hastype{\Gamma}{e}{\tau}$}
-
 \begin{comment}
 $$\begin{array}{cc}
 
@@ -336,7 +335,6 @@ $$\begin{array}{cc}
 \end{array}$$
 \end{comment}
 $$\begin{array}{cc}
-
 \inference
   {}
   {\hastype{\Gamma}{c}{\tc{c}}}
@@ -346,11 +344,8 @@ $$\begin{array}{cc}
   {x:\tau \in \Gamma}
   {\hastype{\Gamma}{x}{\tau}} 
   [\tvariable]
-
 \end{array}$$
-
 $$\begin{array}{cc}
-
 \inference
   {\hastype{\Gamma, x:\tau_x}{e}{\tau} &&     
   \isWellFormed{\Gamma}{\tau_x}
@@ -364,11 +359,8 @@ $$\begin{array}{cc}
   }
   {\hastype{\Gamma}{\eapp{e_1}{e_2}}{\tau[e_2/x]}} 
   [\tapp]
-
 \end{array}$$
-
 \judgementHead{Well-Formedness}{\isWellFormed{\Gamma}{\tau}}
-
 $$\inference
     {\hastype{\Gamma, v:b}{p}{\tbbool}}
     {\isWellFormed{\Gamma}{\tref{b}{p}}}
@@ -382,17 +374,13 @@ $$\inference
     {\isWellFormed{\Gamma}{\tfun{x}{\tau_x}{\tau}}}
     [\wtFun]
 $$
-
-
 \medskip \judgementHead{Subtyping}{\isSubType{\Gamma}{\tau}{\tau}}
-
 $$
 \inference
    {(\Gamma, v:b \vdash \texttt{Valid}(p_1 \Rightarrow p_2))}
    {\isSubType{\Gamma}{\tref{b}{p_1}}{\tref{b}{p_2}}}
    [\tsubBase]
 $$
-
 $$
 \inference
    {\isSubType{\Gamma}{\tau_{21}}{\tau_{11}} &
