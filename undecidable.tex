@@ -46,15 +46,15 @@
 
 \section{Undecidable Systems}\label{sec:undec}
 
-In systems where the refinements can have arbitrary program expressions,
-we can create higher order predicates, thus the verification procedure is undecidable.
+In systems where the refinement language can have arbitrary program expressions,
+higher order predicates can be expressed, thus the verification procedure is undecidable.
 %
 There are many alternatives to reason in such languages, 
 in this section we will present two of them:
 Firstly, we present \textit{Interactive theorem proving};
-where the proofs are statically created by the user.
+where the proofs are statically provided by the user.
 Secondly, we present \textit{Contracts Calculi}; 
-where the assertions are checked at run time.
+where the specifications are checked at run time.
 %Finally, we present \textit{Hybrid Type Checking}; 
 %where the assertions are checked statically whenever possible
 %and dynamically when necessary.
@@ -164,8 +164,8 @@ pred (exist _ 2 two_gt0)
 \end{tabular}
 $$
  
-For this application to typecheck, Coq will check that
-the argument satisfies @pred@ precindition, or 
+This application typechecks, as Coq verifies that 
+the argument satisfies @pred@ precondition, or 
 @two_gt0@ is indeed a proof that @2@ is greater than 0. 
 
 \begin{comment}
@@ -180,14 +180,12 @@ using inference and tacticks.
 %
 Though, the user still needs to provide proofs.
 %
-We will discuss other systems, which remove this burden from the user.
+We discuss other systems, which remove this burden from the user.
 
 \subsection{Contracts}
-
 % intro
-
 Another approach to verify that a program satisfies some 
-assertions is dynamically check them.
+assertions is to dynamically check them.
 % 
 These assertions are called \textit{contracts}, i.e., 
 dynamically enforced pre- and post assertions that
@@ -201,7 +199,7 @@ totally adopted assertions and developed the
 
 %In many systems contracts consist of a refinement type with a supersript:
 Contracts are of the form:
-\tref{v}{\tau}{p}{l}.
+\trefc{v}{\tau}{p}{l}.
 The refinement part, as usual,  describes the values $v$, of type $\tau$
 that satisfy the predicate $p$. 
 The $\mklabel{l}$ superscript is a \textit{blame label}, used to
@@ -235,7 +233,7 @@ no matter if the bad value was passed by directly applying
 a function or by applying a base value.
 %
 \end{comment}
-In 2002, Findler and Felleisen in \cite{Findler02} were the first to
+In 2002, Findler and Felleisen \cite{Findler02} were the first to
 create a system for higher order languages with contracts.
 %
 In their system, the blame is properly assigned in the 
@@ -250,10 +248,9 @@ Finally,
 they treat contracts as first class values, 
 i.e., contracts are values that can be passed to and from functions
 %
-In 2004, Blume and McAllester, at \cite{BlumeM06} noted that 
-in Findler and Felleisen system,
-the concept of contract satisfaction had not actually been defined
-formally, and they proved that their system is indeed
+In 2004, Blume and McAllester \cite{BlumeM06} 
+formally defined contract satisfaction on Findler and Felleisen system,
+and they proved that their system is indeed
 sound and complete, 
 %
 The contract system is sound if whenever
@@ -280,8 +277,8 @@ Hybrid types \cite{flanagan06} are a well-known example in this style; others in
 work of Ou et al. \cite{Ou2004}, Wadler and Findler \cite{WadlerF09}, and Gronski
 et al. \cite{Gronski06}, Belo et al. \cite{Greenberg11} and Grennberg et al. \cite{Greenberg12}.
 %
-In the rest subsection we will discuss manifest contracts and
-present a core calculus that supports them.
+In the rest subsection we discuss manifest contracts and
+present a core calculus for them.
 
 \subsubsection{Manifest Contracts}
 
@@ -292,11 +289,9 @@ to the target type $\tau_t$ and raise \elabel{l}
 if the cast fails.
 
 As an example, consider a cast from integers to positives:
-
 $$
 \ecast{\tyint}{\ttpos}{l} \ \texttt{n}
 $$
-
 The system should statically verify that the value @n@ is 
 of the source type @Int@.
 After the cast, this value is treated as
@@ -369,7 +364,7 @@ Since a positive integer is not a primitive type,
 the only way to get such a type is via a cast.
 Thus, for this application to statically typecheck, the argument should 
 be wrapped in a cast.
-But, if we cast a non-positive value to be be positive,
+But, if we cast a non-positive value to be positive,
 then the cast will fail:
 
 \begin{align*}
@@ -383,9 +378,9 @@ These casts use different labels, with which we can track the source of failure,
 Lets now extend our core calculus $\lambda_c$ to $\lambda_{cc}$,
 so that it supports manifest contracts.
 %
-In the expressions of our language we should add a blaming expression
+In the expressions of our language we add a blaming expression
 and a type cast.
-As a refinement the language can use any core expression.
+The refinement language includes any core expression.
 Everything else remains unchanged.
 
 

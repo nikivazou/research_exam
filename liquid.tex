@@ -4,7 +4,7 @@
 
 \section{Decidable Type Systems}\label{sec:liquid}
 %%Simplify!!!
-In 1991 Freeman and Pfennning, at \cite{FreemanPfenning91} introduced
+In 1991 Freeman and Pfennning \cite{FreemanPfenning91} introduced
 a decidable refinement type system for a subset of ML.
 %
 In their system, the programmer defines refinement
@@ -57,46 +57,70 @@ as often 10-20 percent of
 the code is typing annotations.
 %
 In order to encourage programmers to use refinement specifications in their programs,
-Ou et all, in \cite{Ou2004}, proposed a language design and type system that allows programmers to add
-dependent specifications to program fragments bit by bit. 
-More specifically, certain program components are marked dependent, 
-in which case the type checker verifies
-statically that the programmer has properly maintained refinement typing annotations.
-Other portions of the program are marked simple and in these sections, programmers
-are free to write code as they would in any ordinary simply-typed programming language. When control passes between dependent and simple fragments, data flowing
-from simply-typed code into dependently-typed code is checked dynamically to ensure that the dependent invariants hold.
-Liquid Types \cite{LiquidPLDI08}, 
-proposed type inference, as a means of decreasing the annotation burden.
-We will present Liquid Types in the rest of the section.
+Ou et all \cite{Ou2004}, proposed a language design and type system that allows programmers to add
+semantic specifications to program fragments bit by bit. 
+More specifically, for certain program components the type checker verifies
+statically the refinement type specifications.
+%
+The rest components are written as in any ordinary simply-typed programming language. 
+When control passes between different components, data flowing
+from simply-typed code into refinement-typed code is checked dynamically 
+to ensure that the invariants hold.
+%
+
+Another system that combines static verification with dynamic checks is presented in 
+Flanagan's Hybrid Type Checking \cite{flanagan06}. 
+Flanagan's type system uses syntactic sybtyping to create implication, as discusses in
+\ref{subsec:formal}. 
+Moreover, he assumes an algorithm that decides the validity of the implications.
+For each implication the algorithm runs for limited time: 
+if it answers unsafe, the program is unsafe, 
+but if it does not terminate, a cast is added to postpone the check 
+at runtime.
+%
+Thus, his systems
+checks implications statically, whenever possible
+and dynamically, only when necessary.
+
+In Liquid Types \cite{LiquidPLDI08}, 
+implication checking always terminates in limited time, 
+as implications belong to 
+a decidable subset of first order logic.
+This is achieved by restricting the refinement language
+according to a finite set of qualifiers.
+With this technique, liquid type system allows 
+type inference, as a means of decreasing the annotation burden.
+We present Liquid Types in the rest of the section.
 
 %Semantic Subtyping
 %\mypara{SMT solvers}
-Many systems discussed so far, including DML(C) and Liquid Types, 
+Many systems discussed so far, including DML(C), Hybrid Type System and Liquid Types, 
 use \textit{syntactic subtyping} for constraint 
 generation and SMT solvers for constraint solving.
 \textit{Satisfiability Modulo Theories}(SMT) solvers solve implications 
 for (fragments of) first-order logic plus various standard theories such as
-equality, real and integer (linear) arithmetic, bit vectors, and (extensional) arrays. 
+equality, real and integer (linear) arithmetic, uninterpreted functions, bit vectors, and (extensional) arrays. 
 Some of the leading systems include  CVC3\cite{CVC3}, Yices \cite{Yices}, and Z3 \cite{z3}.
 
 % EXTENSIONS
-Until then, the idea of syntactic subtyping for constraint generation
-and an SMT solver for constraint solving has been extended in various ways:
+With the advent of SMT solvers, 
+the combination of syntactic subtyping for constraint generation
+and an SMT solver for constraint solving has been used in various systems:
 %
-Mandelbaum et all in \cite{MandelbaumWalker03},
+Mandelbaum et all \cite{MandelbaumWalker03},
 extended the domain of predicates to describe the state 
 and the effects of the programs verified.
 %
-Suter et all, in \cite{SuterKK11} increase the power of reasoning 
+Suter et all \cite{SuterKK11} increase the power of reasoning 
 to support user defined recursive functions.
 % automatic inference of ghost variables
-Finally,  Unno et all, in \cite{UnnoTK13},
+Finally,  Unno et all \cite{UnnoTK13},
 created a relative complete system for higher-order functional programs.
  
 Apart from syntactic subtyping, SMT solvers can be used in other 
 refinement decidable systems:
-Dminor, \cite{dminor} uses \textit{semantic subtyping} where subtyping is totally 
-decided by first order implication checking while 
+Dminor \cite{dminor} uses \textit{semantic subtyping} where subtyping is totally 
+decided by first order implication checking, while 
 HALO \cite{VytiniotisJCR13} uses \textit{denotational semantics}
 to prove specification checking.
 
