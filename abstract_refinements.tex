@@ -1,13 +1,13 @@
 \section{Abstract Refinement Types}\label{sec:abstract}
 
-As we saw so far, refinement type systems fall in two categories.
-Expressive types systems, like the ones presented in section \ref{sec:undec}, 
-are statically undecidable; while decidable systems, like those discussed in section \ref{sec:liquid} 
-should restrict the refinement language in a subset on first order logic.
+Refinement type systems, as presented so far, fall into two categories.
+Expressive types systems, as presented in Section \ref{sec:undec}, 
+are statically undecidable; while decidable systems, as presented in Section \ref{sec:liquid}, 
+restrict the refinement language in a subset on first order logic.
 %
 In this section, we present abstract refinement types\cite{Vazou13},
-a means to increase expressiveness of a refinement system,
-while preserving SMT-based decidability.
+a means to enhance expressiveness of a refinement system,
+while preserving (SMT-based) decidability.
 %
 The key insight is that we avail 
 quantification over
@@ -23,20 +23,18 @@ recursive refinements for reasoning about recursive data types.
 
 \subsection{The key idea}
 Consider the monomorphic @max@ function on @Int@ values.
-We can give @max@ a refinement type, stating that its result
+We give @max@ a refinement type, stating that its result
 is greater or equal than both its arguments:
-  
 $$\centering\begin{tabular}{c}
 \begin{code}
 max     :: x:Int -> y:Int -> {v:Int | v >= x && v >= y}
 max x y = if x > y then x else y
 \end{code}
 \end{tabular}$$
-
-With this type signature, if we apply @max@ to two positive integers, 
-say @n@ and @m@, we can get that the result is grater or equal to both 
-of them, as @max n m :: {v:Int | v >=n && v >=m}@.
-But we can not reason about some arbitrary property: 
+If we apply @max@ to two positive integers, 
+say @n@ and @m@, we get that the result is greater or equal to both 
+of them, as @max n m :: {v:Int | v >= n && v >= m}@.
+However, we can not reason about an arbitrary property: 
 If we apply @max@ to two even numbers, can not verify that the result is 
 also even.
 %
@@ -46,7 +44,7 @@ we lose it on the result.
 To solve this problem, we introduce \emph{abstract refinements} 
 which let us 
 quantify or parameterize a type over its constituent refinements.
-For example, we can type @max@ as
+Using abstract refinements, we can type @max@ as
 $$\centering
 \begin{tabular}{c}
 \begin{code}
@@ -71,7 +69,7 @@ type.
 In a call site, 
 we simply instantiate
 the \emph{refinement} parameter of @max@ with the concrete 
-refinement 
+refinement,
 after which type checking proceeds as usual. 
 %
 As an example, suppose that we call @max@ with two even numbers:
@@ -95,8 +93,8 @@ max [even] ::
 \end{tabular}$$
 where the expression in brackets is the refinement instantiation.
 % 
-Since both @n@ and @m@ are even numbers we can apply them to the 
-above function, and get an even result:
+Since both @n@ and @m@ are even numbers, they satisfy function's preconditions, 
+thus we can apply them to @max@, to get an even result:
 $$\centering
 \begin{tabular}{c}
 \begin{code}
@@ -104,7 +102,8 @@ max [even] n m :: {v:Int |  even v}
 \end{code}
 \end{tabular}$$
 
-This is the basic concept of abstract refinements, which , as we will see have many applications.
+This is the basic concept of abstract refinements, which, 
+as we shall see have many interesting applications.
 
 \subsection{Inductive Refinements}
 As a first application we present, how abstract refinements 
@@ -114,7 +113,7 @@ Consider a @loop@ function that takes as arguments
 a function @f@, an integer @n@, 
 a base case @z@ and applies 
 the function @f@ to the @z@, @n@ times:
-
+%
 $$\centering
 \begin{tabular}{c}
 \begin{code}
@@ -124,7 +123,7 @@ loop f n z = go 0 z
                  | otherwise = acc 
 \end{code}
 \end{tabular}$$
-
+%
 Now, consider a user function @incr@ that uses @loop@
 and at each iteration increases the accumulator by one:
 $$\centering
@@ -135,15 +134,16 @@ incr n z = loop f n z
   where f i acc = acc + 1
 \end{code}
 \end{tabular}$$
-
+%
 The accumulator is initialized with @z@ and at each @loop@'s iteration
 it is increased by @1@. So, at the @i@th iteration, the accumulator is equal to 
-@z+i@. There will be @n@ iterations, thus he final result will be @z+n@.
+@z+i@. There will be @n@ iterations, thus the final result will be @z+n@.
 %
-This reasoning constitutes an inductive proof that characterizes @loop@'s behaviour,
-but it is unclear how to give @loop@ a (first-order) refinement type that captures
-this behaviour.
-Hence, it has not been possible to verify that @incr@ result actually adds its two arguments.
+This reasoning constitutes an inductive proof that characterizes @loop@'s behaviour.
+However, 
+it is unclear how to give @loop@ a (first-order) refinement type that 
+describes its inductive behaviour.
+Hence, it has not been possible to verify that @incr@ actually adds its two arguments.
 
 \mypara{Typing loop}
 Abstract refinements allow us to solve this problem, 
@@ -165,10 +165,10 @@ Then the type signature encodes induction on natural numbers:
 (1) @n@ should be a natural number, thus a non-negative integer,
 (2) the base case @z@ should satisfy the invariant at 0,
 (3) in the inductive step, @f@ 
-uses the the old accumulator to create the new one, thus
-if the accumulator satisfies the invariant on the iteration @i@,
-the new one, as constructed by @f@ should satisfy the invariant at @i+1@.
-If all these hold, we conclude that the result satisfies the invariant at @n@.
+uses the old accumulator to create the new one, thus
+if the old accumulator satisfies the invariant on the iteration @i@,
+the new one, as constructed by @f@, should satisfy the invariant at @i+1@.
+If these four conditions hold, we conclude that the result satisfies the invariant at @n@.
 This scheme is not novel\cite{coq-book}; what is new is the encoding, via uninterpreted 
 predicate symbols in a SMT-decidable refinement type system.
 
@@ -183,15 +183,15 @@ incr n z = loop [{\i acc -> acc + i}] f n z
   where f i acc = acc + 1
 \end{code}
 \end{tabular}$$
-
-Where the expression in brackets denotes 
-the instantiation of the abstract refinements.
+%
+In the above example, the expression in brackets denotes 
+the instantiation of the abstract refinement.
 For purpose of illustration 
 we make abstract refinement instantiation explicit, 
-but in \cite{Vazou13} it can be automatically inferred via liquid typing.
-Moreover, 
-in \cite{Vazou13} we present how this inductive reasoning 
-can be applied to reason about structural inductive properties in lists.
+but it could be automatically inferred via liquid typing\cite{Vazou13}.
+%Moreover, 
+%in \cite{Vazou13} we present how this inductive reasoning 
+%can be applied to reason about structural inductive properties in lists.
 
 \subsection{Function Composition}
 
@@ -225,6 +225,8 @@ plusminus n m x = plus . minus
 It is unclear how to give @(.)@ a (first-order) refinement type that
 expresses that the result can be refined with the composition of the
 refinements of both arguments results.
+%
+Thus, this definition of @plusminus@ can not have the previous descriptive type.
 
 \mypara{Typing function composition}
 To solve this problem, we can use abstract refinements and give @(.)@ a type:
@@ -268,7 +270,7 @@ $$\centering
 The result type asserts that there exists a value @z@,
 which is indeed the intermediate result, with the property @z = x - m@.
 With this, the final result is equal to @z + n@.
-If our logic supports equality , as SMT solvers do, 
+If our logic supports equality, as SMT solvers do, 
 we can verify that the final result is indeed equal to @(x - m) + n@.
 In other words, we can verify the desired type of @plusminus@. 
 
@@ -277,7 +279,7 @@ In other words, we can verify the desired type of @plusminus@.
 Next, we illustrate how abstract invariants allow us to 
 specify and verify index-dependent invariants of key-value maps. 
 To this end, we encode \emph{extensible vectors} 
- as functions from @Int@ to 
+as functions from @Int@ to 
 some generic range @a@. Formally, we specify vectors as 
 %
 $$\centering\begin{tabular}{c}\begin{code}
@@ -288,41 +290,41 @@ data Vec a <dom :: Int -> Bool, rng :: Int -> a -> Bool>
 Here, we are parameterizing the definition of the type @Vec@ 
 with \emph{two} abstract refinements, @dom@ and @rng@, which
 respectively describe the \emph{domain} and \emph{range} of the vector.
-That is, @d@ describes the set of \emph{valid} indices, 
-and @r@ specifies an invariant relating each @Int@ index
+That is, @dom@ describes the set of \emph{valid} indices, 
+and @rng@ specifies an invariant relating each @Int@ index
 with the value stored at that index.
 
 \mypara{Describing Vectors}
 With this encoding, we can descibe various vectors. 
 To start with we can have vectors of @Int@ defined on positive integers
 with values equal to their index:
-
+%
 $$\centering\begin{tabular}{c}\begin{code}
 Vec <{\v -> v > 0}, {\_ v -> v = x}> Int
 \end{code}\end{tabular}$$
 %
-
 Or a vector that is defined only on index 1 with value 12:
-
+%
 $$\centering\begin{tabular}{c}\begin{code}
-Vec <{\v -> v > 0}, {\_ v -> v = x}> Int
+Vec <{\v -> v = 1}, {\_ v -> v = 12}> Int
 \end{code}\end{tabular}$$
-
+%
 As a more interesting example, we can define a \textit{Null Terminating String}
 with length @n@, 
 as a vector of @Char@ defined on a range @[0, n)@ 
 with its last element equal to the terminating character:
-
+%
 $$\centering\begin{tabular}{c}\begin{code}
 Vec <{\v -> 0 <= v < n}
     ,{\i v -> i = n-1 => v = `\0`}> Char
 \end{code}\end{tabular}$$
-
-Finally, we can encode a \textit{Fibonacci memoization vector}, that is defined
+%
+Finally, we can encode a \textit{Fibonacci memoization vector}, 
+which can be used to efficiently compute a Fibonacci number,
+that is defined
 on positive integers and its value on index @i@ is either zero
-or the @i@th Fibonacci, and we can use this vector to efficiently compute
-a Fibonacci number:
-
+or the @i@th Fibonacci:
+%
 $$\centering\begin{tabular}{c}\begin{code}
 Vec <{\v -> 0 <= v}
     ,{\i v -> v != 0 => v = fib(i)}> Char
@@ -339,11 +341,11 @@ over the domain and the range of the vectors.
 Then, the programmer has to specify interesting vector properties, 
 as we did for the Fibonacci memoization, or the null terminating string.
 % 
-Finally, the system can verify that user function, that transforms vectors
+Finally, the system can verify that user functions, that transforms vectors
 preserve these properties.
 %
 This procedure is applied in \cite{Vazou13},
-where using appropriate types for vector operations,
+where, with the appropriate types for vector operations,
 we reason about functions that transform Null Terminating Strings
 or efficiently compute a Fibonacci number.
 %
