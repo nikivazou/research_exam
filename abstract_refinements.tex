@@ -333,8 +333,8 @@ Vec <{\v -> 0 <= v}
 \mypara{Using Vectors}
 A first step towards using vectors is 
 to supply the appropriate types 
-for vector operations, like 
-set, get and empty.
+for vector operations, (e.g.,
+set, get and empty).
 This usually means qualifying
 over the domain and the range of the vectors. 
 %
@@ -382,7 +382,7 @@ type UniqList a = [a]<{\h v -> h != v}>
 %
 That is, @IncrList a@ (resp. @DecrList a@) describes a list sorted
 in increasing (resp. decreasing) order, and @UniqList a@ describes
-a list of \emph{distinct} elements, \ie not containing any duplicates.
+a list of \emph{distinct} elements, i.e., not containing any duplicates.
 We can use the above definitions to verify
 %
 $$\centering\begin{tabular}{c}\begin{code}
@@ -409,13 +409,17 @@ insert y (x:xs)
 Thus, abstract refinements allow us to \emph{decouple} the definition 
 of the list from the actual invariants that hold.
 This, in turn, allows us to conveniently reuse the same 
-underlying (non-refined) type to implement various algorithms 
-unlike, say, singleton-type based implementations which require 
-up to three different types of lists (with three different ``nil" and ``cons" 
-constructors~\cite{Sheard06}). This, makes abstract refinements 
+underlying (non-refined) type to 
+express various properties;
+%implement various algorithms 
+%unlike, say, singleton-type based implementations which require 
+%up to three different types of lists (with three different ``nil" and ``cons" 
+%constructors~\cite{Sheard06}). 
+%
+which, makes abstract refinements 
 convenient for verifying complex sorting implementations like that of 
 @Data.List.sort@ which, for efficiency, use lists with different 
-properties (\eg increasing and decreasing).
+properties (e.g., increasing and decreasing).
 
 \subsection{Implementation}
 We implemented abstract refinements in HSolve, 
