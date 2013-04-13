@@ -1,12 +1,22 @@
 \section{Conclusion}
 In this report we presented various refinement type systems.
-We started with type systems where the predicates can be arbitrary expressions.
+We started with type systems where the refinement language expresses arbitrary program expressions.
 Even though these systems are expressive, the assertions formed can not be statically
-verified. Thus to reason about such systems, the user should provide explicit proves
-for the assertions, as in interactive theorem proving, 
-or the assertions can be verified at run time, as in contracts calculi.
-Next we presented Liquid Types, a dependent type system 
-which restricts the predicate language, thus both type checking and inference
-is decidable.
-Finally, we presented Abstract Refinement Types, a means which can be used
-in a refinement type system to increase expressiveness without increasing complexity.
+verified. 
+%
+To reason in such systems, we presented two alternatives:
+interactive theorem proving; where 
+the user should provide explicit proofs and 
+contracts calculi; where 
+the assertions are verified at runtime.
+%
+Next we presented refinement type system 
+which restrict the refinement language, 
+so as to render type checking decidable.
+%thus both type checking and inference
+%is decidable.
+As an example, we presented Liquid Types, in which 
+the refinement language is restricted according to a finite set of qualifiers
+and allows not only decidable verification, but also automatic type inference.
+Finally, we presented Abstract Refinement Types, which can be used
+in a refinement type system to enhance expressiveness without increasing complexity.

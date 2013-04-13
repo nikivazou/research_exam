@@ -424,7 +424,7 @@ properties (e.g., increasing and decreasing).
 \subsection{Implementation}
 We implemented abstract refinements in HSolve, 
 a tool that uses liquid types as a base refinement system.
-HSolve takes an input a haskell source code and some specifications.
+HSolve takes an input haskell source code and some specifications.
 If it can prove that the code satisfies the specifications, 
 it returns \textit{Safe} combined with the code annotated with the inferred
 refinement types.
@@ -433,14 +433,13 @@ that could not be verified.
 
 In the tool abstract refinements appear only on type specifications
 and are transparent for the haskell code.
-Refinement abstraction inserts a variable which is treated as an uninterprented functions
-symbol by the SMT solver. 
+Abstract refinements are treated as uninterprented function
+symbols by the SMT solver. 
 In refinement application the concrete refinement is inferred via liquid 
 type variables; thus the user should not explicitly annotate the code with refinement instantiations.
 
-
-We use the tool to verify 
-some benchmarks, among which ghc official sorting algorithm on lists
+We used HSolve to verify 
+some benchmarks, among which ghc official sorting implementation for lists
 and two ghc libraries (Data.Map.Base and Data.Set.Splay) that reason about Binary Search Trees.
 The specification invariants are usually simple, as abstract refinements
 greatly simplify writing specifications for the majority of interface or public functions.
@@ -454,13 +453,13 @@ without increasing its complexity.
 %
 First of all, the syntax should be extended to support refinement abstraction
 and application:		
-If refinement abstraction, we abstract from an expression $e$
+In refinement abstraction, we abstract from an expression $e$
 the refinement $\pi$ with type $\tau$, while in refinement application
 we instantiate an abstrast refinement with a concrete one $p$
 that may have some parameters $\bar{x}$.
 %
-Then, the predicates of the language should be extended to 
-include abstract refinements, applies to program expressions
+The predicates of the language should be extended to 
+include abstract refinements, applied to program expressions.
 %
 The types of the language should also be extended to include 
 refinement abstraction.
