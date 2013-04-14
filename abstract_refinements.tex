@@ -1,11 +1,11 @@
 \section{Abstract Refinement Types}\label{sec:abstract}
 
 Refinement type systems, as presented so far, fall into two categories.
-Expressive types systems, as presented in Section \ref{sec:undec}, 
-are statically undecidable; while decidable systems, as presented in Section \ref{sec:liquid}, 
+Expressive type systems, as presented in Section \ref{sec:undec}, 
+are statically undecidable, while decidable systems, as presented in Section \ref{sec:liquid}, 
 restrict the refinement language to a subset of first order logic.
 %
-In this section, we present abstract refinement types\cite{Vazou13},
+In this section, we present abstract refinement types~\cite{Vazou13},
 a means to enhance expressiveness of a refinement system,
 while preserving (SMT-based) decidability.
 %
@@ -93,7 +93,7 @@ max [even] ::
 \end{tabular}$$
 where the expression in brackets is the refinement instantiation.
 % 
-Since both @n@ and @m@ are even numbers, they satisfy function's preconditions, 
+Since both @n@ and @m@ are even numbers, they satisfy the function's preconditions, 
 thus we can apply them to @max@, to get an even result:
 $$\centering
 \begin{tabular}{c}
@@ -169,7 +169,7 @@ uses the old accumulator to create the new one, thus
 if the old accumulator satisfies the invariant on the iteration @i@,
 the new one, as constructed by @f@, should satisfy the invariant at @i+1@.
 If these four conditions hold, we conclude that the result satisfies the invariant at @n@.
-This scheme is not novel\cite{coq-book}; what is new is the encoding, via uninterpreted 
+This scheme is not novel~\cite{coq-book}; what is new is the encoding, via uninterpreted 
 predicate symbols in a SMT-decidable refinement type system.
 
 \mypara{Using loop}
@@ -188,7 +188,7 @@ In the above example, the expression in brackets denotes
 the instantiation of the abstract refinement.
 For purpose of illustration 
 we make abstract refinement instantiation explicit, 
-but it could be automatically inferred via liquid typing\cite{Vazou13}.
+but it could be automatically inferred via liquid typing~\cite{Vazou13}.
 %Moreover, 
 %in \cite{Vazou13} we present how this inductive reasoning 
 %can be applied to reason about structural inductive properties in lists.
@@ -323,7 +323,7 @@ Finally, we can encode a \textit{Fibonacci memoization vector},
 which can be used to efficiently compute a Fibonacci number,
 that is defined
 on positive integers and its value on index @i@ is either zero
-or the @i@th Fibonacci:
+or the @i@th Fibonacci number:
 %
 $$\centering\begin{tabular}{c}\begin{code}
 Vec <{\v -> 0 <= v}
@@ -346,7 +346,7 @@ preserve these properties.
 %
 This procedure is applied in \cite{Vazou13},
 where, with the appropriate types for vector operations,
-we reason about functions that transform Null Terminating Strings
+we reason about functions that transform null terminating strings
 or efficiently compute a Fibonacci number.
 %
 
@@ -428,18 +428,18 @@ HSolve takes an input haskell source code and some specifications.
 If it can prove that the code satisfies the specifications, 
 it returns \textit{Safe} combined with the code annotated with the inferred
 refinement types.
-Otherwise, it returns \textit{UnSafe}, combined with the source location 
+Otherwise, it returns \textit{Unsafe}, combined with the source location 
 that could not be verified.
 
-In the tool abstract refinements appear only on type specifications
+In our system abstract refinements appear only on type specifications
 and are transparent for the haskell code.
 Abstract refinements are treated as uninterprented function
 symbols by the SMT solver. 
 In refinement application the concrete refinement is inferred via liquid 
-type variables; thus the user should not explicitly annotate the code with refinement instantiations.
+type variables; thus the user does not have to explicitly annotate the code with refinement instantiations.
 
 We used HSolve to verify 
-some benchmarks, among which are GHC's official sorting implementation for lists
+several benchmarks, among which are GHC's official sorting implementation for lists
 and two GHC libraries (Data.Map.Base and Data.Set.Splay) that reason about Binary Search Trees.
 The specification invariants are usually simple, as abstract refinements
 greatly simplify writing specifications for the majority of interface or public functions.
@@ -472,7 +472,7 @@ and the checking proceeds in a straightforward way.
 In the refinement application, the abstract refinement $\pi$ is replaced with a concrete one
 over the type $\tau$. A formal definition of this substitution can be found in our paper\cite{Vazou13}.
 
-Similarly, since we extended our types, the wellformedness and subtyping 
+Similarly, since we extended our types, the well-formedness and subtyping 
 rules should be extended.
 In both cases, the abstract refinement is added in the environment
 and the check proceeds in a straightforward way.

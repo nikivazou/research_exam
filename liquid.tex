@@ -17,7 +17,7 @@ with exactly one element.
 These definitions are used to 
 construct a finite datatype lattice of each ML type;
 a singleton list or a nill list is
-also an vanilla list, thus both refined lists are 
+also a vanilla list, thus both refined lists are 
 less than the unrefined one in the lattice.
 %
 The datatype lattice is a representation of the subtype
@@ -26,8 +26,8 @@ refinement type inference algorithm.
 Since each lattice is finite, the 
 subtyping relation is decidable.
 
-Later, at \cite{pfenningxi98}, 
-they extended their language to support
+Later, 
+they extended~\cite{pfenningxi98} their language to support
 linear arithmetic constraints; thus they could
 encode a list with length some integer $n$ and 
 reason about safety of list indexing.
@@ -35,7 +35,7 @@ In this system, subtyping reduces to predicate implication
 and they used a variant of Fourier's method \cite{OmegaTestCACM} 
 for constraint solving.
 %
-Finally, they created DML(C)\cite{XiPfenning99}, 
+Finally, they created DML(C)~\cite{XiPfenning99}, 
 an extension of ML with refinement types, that supports 
 array bound check elimination,
 redundant pattern matching clause removal, 
@@ -53,7 +53,7 @@ constraint simplification problems can be solved efficiently
 in practice. 
 %
 Its disadvantage is that annotation burden is high for the programmer,  
-as often 10-20 percent of
+as often 10-20\% of
 the code is typing annotations.
 %
 In order to encourage programmers to use refinement specifications in their programs,
@@ -62,7 +62,7 @@ semantic specifications to program fragments bit by bit.
 More specifically, for certain program components the type checker verifies
 statically the refinement type specifications.
 %
-The rest components are written as in any ordinary simply-typed programming language. 
+The rest of the components are written as in any ordinary simply-typed programming language. 
 When control passes between different components, data flowing
 from simply-typed code into refinement-typed code is checked dynamically 
 to ensure that the invariants hold.
@@ -70,20 +70,20 @@ to ensure that the invariants hold.
 
 Another system that combines static verification with dynamic checks is presented in 
 Flanagan's Hybrid Type Checking \cite{flanagan06}. 
-Flanagan's type system uses syntactic sybtyping to create implication, as discusses in
-\ref{subsec:formal}. 
+Flanagan's type system uses syntactic sybtyping to create implications, as discusses in
+Section \ref{subsec:formal}. 
 Moreover, he assumes an algorithm that decides the validity of the implications.
 For each implication the algorithm runs for limited time: 
 if it answers unsafe, the program is unsafe, 
 but if it does not terminate, a cast is added to postpone the check 
-at runtime.
+until runtime.
 %
-Thus, his systems
+Thus, his system
 checks implications statically, whenever possible
 and dynamically, only when necessary.
 
 In Liquid Types \cite{LiquidPLDI08}, 
-implication checking always terminates in limited time, 
+implication checking always terminates, 
 as implications belong to 
 a decidable subset of first order logic.
 This is achieved by restricting the refinement language
@@ -97,24 +97,24 @@ We present Liquid Types in the rest of the section.
 Many systems discussed so far, including DML(C), Hybrid Type System and Liquid Types, 
 use \textit{syntactic subtyping} for constraint 
 generation and SMT solvers for constraint solving.
-\textit{Satisfiability Modulo Theories}(SMT) solvers solve implications 
+\textit{Satisfiability Modulo Theories} (SMT) solvers solve implications 
 for (fragments of) first-order logic plus various standard theories such as
 equality, real and integer (linear) arithmetic, uninterpreted functions, bit vectors, and (extensional) arrays. 
-Some of the leading systems include  CVC3\cite{CVC3}, Yices \cite{Yices}, and Z3 \cite{z3}.
+Some of the leading systems include  CVC3~\cite{CVC3}, Yices~\cite{Yices}, and Z3~\cite{z3}.
 
 % EXTENSIONS
 With the advent of SMT solvers, 
 the combination of syntactic subtyping for constraint generation
 and an SMT solver for constraint solving has been used in various systems:
 %
-Mandelbaum et all \cite{MandelbaumWalker03},
+Mandelbaum \etal \cite{MandelbaumWalker03},
 extended the domain of predicates to describe the state 
-and the effects of the programs verified.
+and the effects of the verified programs.
 %
-Suter et all \cite{SuterKK11} increase the power of reasoning 
+Suter \etal \cite{SuterKK11} increase the power of reasoning 
 to support user defined recursive functions.
 % automatic inference of ghost variables
-Finally,  Unno et all \cite{UnnoTK13},
+Finally, Unno \etal \cite{UnnoTK13},
 created a relatively complete system for higher-order functional programs.
  
 Apart from syntactic subtyping, SMT solvers can be used in other 
@@ -140,7 +140,7 @@ to prove specification checking.
 
 \subsection{Liquid Types}\label{subsec:liquid}
 
-In Liquid Types\cite{LiquidPLDI08}, 
+In Liquid Types~\cite{LiquidPLDI08}, 
 Rondon \etal restrict the refinement language according to a 
 finite set of qualifiers, and achieve not only decidable type checking, but also automatic
 type inference.
@@ -171,27 +171,25 @@ possible types is bounded.
 
 \mypara{Logical Qualifiers and Liquid Types}
 A logical qualifier is a
-boolean-valued expression (i.e., predicate) over the program variables, 
+boolean-valued expression over the program variables, 
 the special value variable $v$ which is distinct from the
 program variables, and the special placeholder variable $\star$ that
 can be instantiated with program variables. 
 Let \qset be the set of logical qualifiers
 $\{0 < \star, \star \leq v, v < \star,  v = \star + 1\}$. 
 %
-We say that
-a qualifier $q$ matches the qualifier $q'$
-if replacing some subset of
-the free variables in $q$ with $\star$ yields $q'$.
+A qualifier $q$ matches the qualifier $q'$
+if replacing some variables in $q$ with $\star$ yields $q'$.
 For example, the qualifier
 $x \leq v$ matches the qualifier $\star \leq v$. 
-We write $\qset^\star$
-for the set of all
+$\qset^\star$
+is the set of all
 qualifiers not containing $\star$ that match some qualifier in \qset. 
-For example, when \qset\ is as defined as above, 
-and $x$, $y$ and $n$ are program variables,
+For instance, %when \qset\ is as defined as above, 
+if $x$, $y$ and $n$ are program variables,
 $\qset^\star$
 includes the qualifiers
-$\{0 < x, x \leq v, y \leq v, v = n + 1, v <n\}$. 
+$\{0 < x, x \leq v, y \leq v, v = n + 1, v < n\}$. 
 A liquid type over \qset\ is a refinement type where the refinement predicates are
 conjunctions of qualifiers from $\qset ^ \star$.
 
@@ -242,7 +240,7 @@ $$\centering
 \end{tabular}
 $$
 %
-and use it to construct type of @pred@'s result:
+and use it to construct the type of @pred@'s result:
 $$\centering
 \begin{tabular}{c}
 \begin{code}
@@ -300,8 +298,8 @@ The body of the function will be type-checked against the given signature.
 %
 In the second step, as before, 
 we construct the type of the body to be 
-@{v:Int | n - 1}@ and constraint 
-this type to be subtype of @pred@'s result, or
+@{v:Int | n - 1}@ and constrain 
+this type to be a subtype of @pred@'s result, or
 $$\centering
 \begin{tabular}{c}
 \begin{code}
@@ -325,23 +323,23 @@ say @0@, we will get the unsatisfied constraint
 $v = 0 \Rightarrow v > 0$, 
 so the program will be unsafe.
 
-\subsection{Applications of Liquid Types}
+\subsubsection{Applications of Liquid Types}
 Liquid Types, as introduced in \cite{LiquidPLDI08}, used OCaml as target language
-and were used to verify array bound checking.
-One year later\cite{LiquidPLDI09}, they were extended with recursive and polymorphic refinements
+and were used to verify array bounds checking.
+One year later~\cite{LiquidPLDI09}, they were extended with recursive and polymorphic refinements
 to enable static verification of complex data structures; among which 
 list sortedness or Binary Tree ordering.
 %
 Liquid Types were used to verify properties even in imperative languages.
-Low-level Liquid Types\cite{Rondon10} is a refinement type system for
+Low-level Liquid Types~\cite{Rondon10} is a refinement type system for
 C based on Liquid Types to verify memory safety properties, 
 like the absence of array bounds violations
 and null-dereferences.
-Finally, Liquid Effects\cite{Kawaguchi12},
+Finally, Liquid Effects~\cite{Kawaguchi12},
 is a type-and-effect system based on refinement types
 which allows for fine-grained, low-level, shared memory multithreading while statically guaranteeing that a program is deterministic. 
 
-\subsection{Formal Language}
+\subsubsection{Formal Language}
 We extend the core calculus $\lambda_C$ to $\lambda_L$, 
 a calculus that supports liquid type checking.
 
@@ -358,7 +356,7 @@ the subtyping relation is decidable
 because the refinement language, 
 and thus the implications created, refer to a decidable logic.
 Finally, the \texttt{Valid} relation is evaluated using 
-the z3\cite{z3} SMT solver.
+the Z3~\cite{z3} SMT solver.
 \begin{figure}[ht!]
 \centering
 $$

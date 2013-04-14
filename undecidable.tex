@@ -29,11 +29,11 @@
 \texttt{\{v:{\color{colorint}Int}|v = #1\}}
 }
 
-\newcommand\tlabel{T-Label}
-\newcommand\tcast{T-Cast}
+\newcommand\tlabel{\rulename{T-Label}}
+\newcommand\tcast{\rulename{T-Cast}}
 
-\newcommand\cbase{C-Base}
-\newcommand\cfunction{C-Fun}
+\newcommand\cbase{\rulename{C-Base}}
+\newcommand\cfunction{\rulename{C-Fun}}
 
 
 \newcommand\predname{{\color{blue}\texttt{pred}}}
@@ -49,7 +49,7 @@
 In systems where the refinement language can have arbitrary program expressions,
 higher order predicates can be expressed, thus the verification procedure is undecidable.
 %
-There are many alternatives to reason in such languages, 
+There are many alternatives to reason in such languages;
 in this section we will present two of them.
 Firstly, we present \textit{Interactive theorem proving},
 where the proofs are statically provided by the user.
@@ -79,9 +79,13 @@ the constructive proof of its formal specification.
 
 As an example, consider once again the @pred@ function
 that computes the predecessor of a positive number.
-
-@pred :: s:{n : nat | n > 0}  -> {v:nat | s = S v}@
-
+$$\centering
+\begin{tabular}{c}
+\begin{codeCoq}
+pred :: s:{n : nat | n > 0}  -> {v:nat | s = S v}
+\end{codeCoq}
+\end{tabular}
+$$
 This type signature says that if @pred@ is called with a 
 positive number @s@, it will return @s@'s predecessors. 
 There are two different assertions that should be proved:
@@ -117,20 +121,22 @@ $$
 \label{fig:coq}
 \end{figure}
 
-
-In Coq\cite{cpdt}
+To illustrate programming with refinement types in Coq, 
+we define the @pred@ function,
+as presented in Figure \ref{fig:coq}, following \cite{cpdt}.
+%
+In Coq
 the refinement type 
 is defined in the standard library, 
 and is syntactic sugar,
 for the type family @sig@.
-With this, one can define the @pred@ function,
-as presented in Figure \ref{fig:coq}.
 The function @pred@ takes an argument @s@ which has two components:
 a natural number @n@
 and a proof @pf@ that this number is positive.
 There is a case analysis on @s@:
 if @n@ is zero, then 
-the proof @pf@ is used to reach a contradiction; thus this case can not occur.
+the proof @pf@ is used to construct a proof that zero is greater that zero (using a lemma @zgtz@)
+and thus reach a contradiction; so this case can not occur.
 Otherwise, @n@ has a predecessor, say @n'@ and 
 the function returns @n'@ combined with a proof that its successor is 
 equal to @n@. This proof is constructed by applying @eq_refl@, the only constructor
@@ -177,7 +183,7 @@ Even though this example seems tedious,
 interactive theorem proving can be simplified
 using inference and tactics. 
 %
-Though, the user still needs to provide proofs.
+However, the user still needs to provide proofs.
 %
 We discuss other systems, which remove this burden from the user.
 
@@ -187,7 +193,7 @@ Another approach to verify that a program satisfies some
 assertions is to dynamically check them.
 % 
 These assertions are called \textit{contracts}, i.e., 
-dynamically enforced pre- and post assertions that
+dynamically enforced pre- and post-assertions that
 define formal, precise, and verifiable interface specifications 
 for software components.
 %	
@@ -208,10 +214,10 @@ As an example,
 consider a contract for positive integers \trefpos{l}
 applied to two values, $2$ and $0$: 
 \begin{align*}
-\trefpos{l'}&\ 2 &&\rightarrow 2 \\
-\trefpos{l}&\ 0  &&\rightarrow \elabel{l}
+\trefpos{l'}\ 2 &\rightarrow	 2 \\
+\trefpos{l}\ 0 &\rightarrow\ \elabel{l}
 \end{align*}
-
+%
 If the check succeeds, as in the case for $2$,
 then the application will return the value, so the first 
 application just returns $2$.
@@ -237,7 +243,7 @@ create a system for higher order languages with contracts.
 %
 In their system, the blame is properly assigned in the 
 higher-order components of the program via a
-``variance-contravariance`` rule.
+``variance-contravariance'' rule.
 % Other features
 Moreover,
 they allow dependent contracts, i.e., 
@@ -245,12 +251,12 @@ contracts that have the form of a refinement function type,
 where the result can depend on the argument.
 Finally,
 they treat contracts as first class values, 
-i.e., contracts are values that can be passed to and from functions
+i.e., contracts are values that can be passed to and from functions.
 %
 In 2004, Blume and McAllester \cite{BlumeM06} 
 formally defined contract satisfaction on Findler and Felleisen's system,
 and they proved that their system is indeed
-sound and complete, 
+sound and complete.
 %
 The contract system is sound if whenever
 the algorithm blames a contract declaration, 
@@ -260,28 +266,27 @@ Conversely, it is complete if blame on an expression is explained
 by the fact that the expression violates one of it contract interfaces.
 
 % Contracts and refinement types 
-Findler and Felleisen's work sparked a great interest
-in contracts, and in the following years a variety
-of related systems have been studied. 
+Since Findler and Felleisen's work 
+a variety of contract calculi systems have been studied. 
 Broadly, these come in two different sorts. 
 %
 In systems with \textit{latent contracts}, types and contracts
-are orthogonal features. Examples of this style include Findler
+are orthogonal features. Examples of these systems include Findler
 and Felleisen's original system, Hinze \etal \cite{Hinze06}, Blume and
 McAllester \cite{BlumeM06}, Chitil and Huch \cite{ChitilH07}, Guha \etal \cite{GuhaMFK07},
 and Tobin-Hochstadt and Felleisen \cite{Tobin-HochstadtF08}. 
 By contrast, \textit{manifest contracts} are integrated into the type system, 
 which tracks, for each value, the most recently checked contract. 
 Hybrid types \cite{flanagan06} are a well-known example in this style; others include the
-work of Ou \etal \cite{Ou2004}, Wadler and Findler \cite{WadlerF09}, and Gronski
-\etal \cite{Gronski06}, Belo \etal \cite{Greenberg11} and Grennberg \etal \cite{Greenberg12}.
+work of Ou \etal \cite{Ou2004}, Wadler and Findler \cite{WadlerF09}, Gronski
+\etal \cite{Gronski06}, Belo \etal \cite{Greenberg11}, and Grennberg \etal \cite{Greenberg12}.
 %
 In the rest of this subsection we discuss manifest contracts and
 present a core calculus for them.
 
 \subsubsection{Manifest Contracts}
 
-Manifest Contracts Systems\cite{Greenberg12}, use casts
+Manifest Contracts Systems~\cite{Greenberg12}, use casts
 \ecast{\tau_s}{\tau_t}{l}
 to convert values from the source type $\tau_s$ 
 to the target type $\tau_t$ and raise \elabel{l}
@@ -313,12 +318,12 @@ $\ecast{\tau_{12}}{\tau_{22}}{l}\ (
 )$
 wrapping the argument @v@ in a (contravariant) cast between the domain types
 and wrapping the result of the application in a (covariant) cast between the
-codomain types.
+domain types.
 
 To illustrate how function casts work let's once more consider 
 the \predname\ example.
 %
-To get desired the type signature for \predname, 
+To get the desired type signature for \predname, 
 we have to wrap the function's definition 
 in a type cast:
 \begin{align*}
@@ -384,11 +389,11 @@ Everything else remains unchanged.
 
 
 In the typing judgements we add two rules:
-a blame expression can have any well formed type, 
+a blame expression can have any well-formed type, 
 while a type cast expression behaves as a function from the 
 source to the target type.
 For a casting expression to typecheck, both types should be 
-well formed and compatible, i.e., their unrefined types should be 
+well-formed and compatible, i.e., their unrefined types should be 
 the same. We check this with a new compatibility judgement.
 
 \begin{figure}[ht!]
@@ -444,9 +449,7 @@ $$\begin{array}{cc}
   {\isWellFormed{\Gamma}{\tau}}
   {\hastype{\Gamma}{\elabel{l}}{\tau}}
   [\tlabel]
-
 &
-
 \inference
   {\isWellFormed{\Gamma}{\tau_1} &&
    \isWellFormed{\Gamma}{\tau_2} && 
