@@ -328,16 +328,16 @@ we have to wrap the function's definition
 in a type cast:
 \begin{align*}
 & \prednamep\ x= x - 1 \\
-& \predname  = \ecast{\tyint \texttt{->} \tyint}{x:\ttpos \texttt{->} \ttpred{x}}{lpred} \ \prednamep
+& \predname  = \ecast{\tyint \texttt{->} \tyint}{x:\ttpos \texttt{->} \ttpred{x}}{l} \ \prednamep
 \end{align*}
 If we apply a positive number, say @2 :: {v:Int | v > 0}@, we will have the following computation:
 %
 \begin{align*}
-\predname\ \texttt{2} &=
-(\ecast{\tyint \texttt{->} \tyint}{x:\ttpos \texttt{->} \ttpred{x}}{lpred} \ \prednamep)\ \texttt{2} \\
-&\rightarrow^\star (\ecast{\tyint}{\ttpred{2}}{lpred}) \ (\prednamep(\ecast{\ttpos}{\tyint}{lpred}\texttt{2})) \\ 
-&\rightarrow^\star (\ecast{\tyint}{\ttpred{2}}{lpred}) \ (\prednamep\ \texttt{2}) \\ 
-&\rightarrow^\star (\ecast{\tyint}{\ttpred{2}}{lpred}) \ \texttt{1} \\ 
+&\predname\ \texttt{2}\\
+&=(\ecast{\tyint \texttt{->} \tyint}{x:\ttpos \texttt{->} \ttpred{x}}{l} \ \prednamep)\ \texttt{2} \\
+&\rightarrow^\star (\ecast{\tyint}{\ttpred{2}}{l}) \ (\prednamep(\ecast{\ttpos}{\tyint}{l}\texttt{2})) \\ 
+&\rightarrow^\star (\ecast{\tyint}{\ttpred{2}}{l}) \ (\prednamep\ \texttt{2}) \\ 
+&\rightarrow^\star (\ecast{\tyint}{\ttpred{2}}{l}) \ \texttt{1} \\ 
 &\rightarrow^\star \texttt{1} \\ 
 \end{align*}
 
@@ -348,18 +348,18 @@ Finally, this result is checked to be @1@ and since this check succeeds the valu
 %
 If \prednamep was not returning the correct value, the program would raise a blame:
 \begin{align*}
-\prednamep\ & x= 0 \\
-\predname\ \texttt{2} &=
-(\ecast{\tyint \texttt{->} \tyint}{x:\ttpos \texttt{->} \ttpred{x}}{lpred} \ \prednamep)\ \texttt{2} \\
-&\rightarrow^\star (\ecast{\tyint}{\ttpred{2}}{lpred}) \ (\prednamep\ (\ecast{\ttpos}{\tyint}{lpred} \ \texttt{2})) \\ 
-&\rightarrow^\star (\ecast{\tyint}{\ttpred{2}}{lpred}) \ (\prednamep\ \texttt{2}) \\ 
-&\rightarrow^\star (\ecast{\tyint}{\ttpred{2}}{lpred}) \ \texttt{0} \\ 
-&\rightarrow^\star \elabel{lpred} \\ 
+&\prednamep\ x= 0 \\
+&\predname\ \texttt{2} \\
+&=(\ecast{\tyint \texttt{->} \tyint}{x:\ttpos \texttt{->} \ttpred{x}}{l} \ \prednamep)\ \texttt{2} \\
+&\rightarrow^\star (\ecast{\tyint}{\ttpred{2}}{l}) \ (\prednamep(\ecast{\ttpos}{\tyint}{l}\texttt{2})) \\ 
+&\rightarrow^\star (\ecast{\tyint}{\ttpred{2}}{l}) \ (\prednamep\ \texttt{2}) \\ 
+&\rightarrow^\star (\ecast{\tyint}{\ttpred{2}}{l}) \ \texttt{0} \\ 
+&\rightarrow^\star \elabel{l} \\ 
 \end{align*}
 The evaluation is the same as in the previous example, 
 up to the point where the \prednamep application returns.
 Here, the application returns @0@, thus the final check fails 
-and the program raises a blame.
+and the program raises the blame {\mklabel{l}}.
 
 % testing the argument
 You may notice that in both cases \texttt{pred'} is applied to a 
@@ -372,7 +372,7 @@ But, if we cast a non-positive value to be positive,
 then the cast will fail:
 
 \begin{align*}
-\predname \ ((\ecast{\tyint}{\ttpos}{zero})\ \texttt{0}) &= \elabel{zero}
+\predname \ ((\ecast{\tyint}{\ttpos}{zero})\ \texttt{0}) &\rightarrow^\star \elabel{zero}
 \end{align*}
 
 We saw that two distinct casts should be used to satisfy the functions pre- and post-conditions.
