@@ -3,7 +3,7 @@
 Refinement type systems, as presented so far, fall into two categories.
 Expressive types systems, as presented in Section \ref{sec:undec}, 
 are statically undecidable; while decidable systems, as presented in Section \ref{sec:liquid}, 
-restrict the refinement language in a subset on first order logic.
+restrict the refinement language to a subset of first order logic.
 %
 In this section, we present abstract refinement types\cite{Vazou13},
 a means to enhance expressiveness of a refinement system,
@@ -102,11 +102,11 @@ max [even] n m :: {v:Int |  even v}
 \end{code}
 \end{tabular}$$
 
-This is the basic concept of abstract refinements, which, 
-as we shall see have many interesting applications.
+This is the basic concept of abstract refinements, which 
+as we shall see, have many interesting applications.
 
 \subsection{Inductive Refinements}
-As a first application we present, how abstract refinements 
+As a first application we present how abstract refinements 
 allow us to formalize induction within the type system.
 
 Consider a @loop@ function that takes as arguments
@@ -124,7 +124,7 @@ loop f n z = go 0 z
 \end{code}
 \end{tabular}$$
 %
-Now, consider a user function @incr@ that uses @loop@
+Now consider a user function @incr@ that uses @loop@
 and at each iteration increases the accumulator by one:
 $$\centering
 \begin{tabular}{c}
@@ -255,7 +255,7 @@ With this type for function composition,
 user functions get the concrete refinement of the final result
 to be the composition of the two refinements of the argument functions.
 
-Back to @plusminus@ example, with the appropriate refinement instantiation we get 
+Back to the @plusminus@ example, with the appropriate refinement instantiation we get 
 the concrete refinement type for function composition:
 $$\centering
 \begin{tabular}{c}
@@ -295,7 +295,7 @@ and @rng@ specifies an invariant relating each @Int@ index
 with the value stored at that index.
 
 \mypara{Describing Vectors}
-With this encoding, we can descibe various vectors. 
+With this encoding, we can describe various vectors. 
 To start with we can have vectors of @Int@ defined on positive integers
 with values equal to their index:
 %
@@ -341,7 +341,7 @@ over the domain and the range of the vectors.
 Then, the programmer has to specify interesting vector properties, 
 as we did for the Fibonacci memoization, or the null terminating string.
 % 
-Finally, the system can verify that user functions, that transforms vectors
+Finally, the system can verify that user functions, that transform vectors,
 preserve these properties.
 %
 This procedure is applied in \cite{Vazou13},
@@ -439,8 +439,8 @@ In refinement application the concrete refinement is inferred via liquid
 type variables; thus the user should not explicitly annotate the code with refinement instantiations.
 
 We used HSolve to verify 
-some benchmarks, among which ghc official sorting implementation for lists
-and two ghc libraries (Data.Map.Base and Data.Set.Splay) that reason about Binary Search Trees.
+some benchmarks, among which are GHC's official sorting implementation for lists
+and two GHC libraries (Data.Map.Base and Data.Set.Splay) that reason about Binary Search Trees.
 The specification invariants are usually simple, as abstract refinements
 greatly simplify writing specifications for the majority of interface or public functions.
 Moreover, the verification procedure required only a few code modifications, 
@@ -452,8 +452,8 @@ We suggest that any refinement system can be extended with abstract refinements
 without increasing its complexity.
 %
 First of all, the syntax should be extended to support refinement abstraction
-and application:		
-In refinement abstraction, we abstract from an expression $e$
+and application.
+In the case of refinement abstraction, we abstract from an expression $e$
 the refinement $\pi$ with type $\tau$, while in refinement application
 we instantiate an abstrast refinement with a concrete one $p$
 that may have some parameters $\bar{x}$.
@@ -465,14 +465,14 @@ The types of the language should also be extended to include
 refinement abstraction.
 %
 
-Since we extended our expressions the relevant typing rules should be added:
+Since we extended our expressions the relevant typing rules should be added.
 The refinement abstraction expression is typed as an refinement abstraction
-type: the abstract refinement is treated as a variable
+type, the abstract refinement is treated as a variable
 and the checking proceeds in a straightforward way.
 In the refinement application, the abstract refinement $\pi$ is replaced with a concrete one
-over the type $\tau$. A formal definition of this substitution can be found in our paper.
+over the type $\tau$. A formal definition of this substitution can be found in our paper\cite{Vazou13}.
 
-Similarly, since we extended our types, the wellformdness and subtyping 
+Similarly, since we extended our types, the wellformedness and subtyping 
 rules should be extended.
 In both cases, the abstract refinement is added in the environment
 and the check proceeds in a straightforward way.
@@ -481,7 +481,7 @@ We note that
 abstract refinements 
 can be treated as uninterprented functions in the implication
 checking algorithm, thus the complexity of the system is not increased.
-Moreover, they appear only in the types, thus they can be erased in run-type.
+Moreover, they appear only in the types, thus they can be erased at run-time.
 \begin{figure}[ht!]
 \centering
 $$

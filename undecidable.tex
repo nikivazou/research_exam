@@ -39,8 +39,8 @@
 \newcommand\predname{{\color{blue}\texttt{pred}}}
 \newcommand\prednamep{{\color{blue}\texttt{pred'}}}
 
-\newcommand\elabel[1]{\ensuremath{\Uparrow \mklabel{#1}}}
-\newcommand\ecast[3]{\ensuremath{\langle #1 \Rightarrow #2 \rangle^{\mklabel{#3}}}}
+\newcommand\elabel[1]{\ensuremath{\Uparrow {\mklabel{#1}}}}
+\newcommand\ecast[3]{\ensuremath{\langle #1 \Rightarrow #2 \rangle^{{\mklabel{#3}}}}}
 
 \newcommand\isCompatible[2]{\ensuremath{ #1 \Vert #2 }}
 
@@ -50,10 +50,10 @@ In systems where the refinement language can have arbitrary program expressions,
 higher order predicates can be expressed, thus the verification procedure is undecidable.
 %
 There are many alternatives to reason in such languages, 
-in this section we will present two of them:
-Firstly, we present \textit{Interactive theorem proving};
+in this section we will present two of them.
+Firstly, we present \textit{Interactive theorem proving},
 where the proofs are statically provided by the user.
-Secondly, we present \textit{Contracts Calculi}; 
+Secondly, we present \textit{Contracts Calculi},
 where the specifications are checked at run time.
 %Finally, we present \textit{Hybrid Type Checking}; 
 %where the assertions are checked statically whenever possible
@@ -62,15 +62,14 @@ where the specifications are checked at run time.
 \subsection{Interactive theorem Proving}
 % intro
 One approach to verify that a program satisfies some 
-specifications is the user to statically prove them.
+specifications is for the user to statically prove them.
 % 
 This approach is used by \textit{interactive theorem provers}, 
 such as 
 NuPRL \cite{Constable86},
 Coq \cite{coq-book}, F$^\star$ \cite{SwamyCFSBY11}, Agda \cite{norell07}
 and Isabelle \cite{NPW2002}
-that allow the 
-expression of mathematical assertions, 
+that can express mathematical assertions, 
 mechanically check proofs of these assertions, 
 help to find formal proofs, 
 and extract a certified program from 
@@ -91,7 +90,7 @@ There are two different assertions that should be proved:
 At @pred@'s definitions the programmer should provide a proof
 that this assertion is indeed satisfied.
 \item The argument is a positive number.
-At each call side of @pred@, 
+At each call site of @pred@, 
 the user should provide a proof that 
 its argument is positive.
 \end{itemize}
@@ -130,7 +129,7 @@ The function @pred@ takes an argument @s@ which has two components:
 a natural number @n@
 and a proof @pf@ that this number is positive.
 There is a case analysis on @s@:
-If @n@ is zero, then 
+if @n@ is zero, then 
 the proof @pf@ is used to reach a contradiction; thus this case can not occur.
 Otherwise, @n@ has a predecessor, say @n'@ and 
 the function returns @n'@ combined with a proof that its successor is 
@@ -151,7 +150,7 @@ Inductive eq (A:Type) (x:A) : A -> Prop :=
 \end{verbatim}
 \end{comment}
 
-In the call side of @pred@, the programmer should provide
+In the call site of @pred@, the programmer should provide
 both the argument and a proof that it is positive.
 As an example,
 if @two_gt0@ is a proof that two is greater than zero, we can have
@@ -165,7 +164,7 @@ pred (exist _ 2 two_gt0)
 $$
  
 This application typechecks, as Coq verifies that 
-the argument satisfies @pred@ precondition, or 
+the argument satisfies @pred@'s precondition, i.e., that  
 @two_gt0@ is indeed a proof that @2@ is greater than 0. 
 
 \begin{comment}
@@ -174,9 +173,9 @@ Theorem two_gt0 : 2 > 0.
 Qed.
 \end{comment}
 
-Even this example seems tedious, 
-interactive theorem prooving can be simplified
-using inference and tacticks. 
+Even though this example seems tedious, 
+interactive theorem proving can be simplified
+using inference and tactics. 
 %
 Though, the user still needs to provide proofs.
 %
@@ -189,10 +188,10 @@ assertions is to dynamically check them.
 % 
 These assertions are called \textit{contracts}, i.e., 
 dynamically enforced pre- and post assertions that
-define formal, precise and verifiable interface specifications 
+define formal, precise, and verifiable interface specifications 
 for software components.
 %	
-Their use in programming languages dates back to the 1970s; 
+Their use in programming languages dates back to the 1970s,
 when Eiffel \cite{Eiffel}, an object-oriented programming language,
 totally adopted assertions and developed the 
 ``Design by Contract'' philosophy \cite{Meyer92}.
@@ -226,7 +225,7 @@ is complex:
 %
 The boundaries between cooperating components are more obscure 
 than in the world with only first-order functions. 
-A function may invoke a function passed to it at its call side.
+A function may invoke a function passed to it at its call site.
 Accordingly, the blame for a corresponding contract violation must 
 lie with the supplier of the bad value, 
 no matter if the bad value was passed by directly applying 
@@ -241,7 +240,7 @@ higher-order components of the program via a
 ``variance-contravariance`` rule.
 % Other features
 Moreover,
-they allow dependent contracts, i.e. 
+they allow dependent contracts, i.e., 
 contracts that have the form of a refinement function type, 
 where the result can depend on the argument.
 Finally,
@@ -249,7 +248,7 @@ they treat contracts as first class values,
 i.e., contracts are values that can be passed to and from functions
 %
 In 2004, Blume and McAllester \cite{BlumeM06} 
-formally defined contract satisfaction on Findler and Felleisen system,
+formally defined contract satisfaction on Findler and Felleisen's system,
 and they proved that their system is indeed
 sound and complete, 
 %
@@ -257,7 +256,7 @@ The contract system is sound if whenever
 the algorithm blames a contract declaration, 
 that contract declaration is actually wrong.
 %
-Conversely, it is complete if blame on a expression is explained
+Conversely, it is complete if blame on an expression is explained
 by the fact that the expression violates one of it contract interfaces.
 
 % Contracts and refinement types 
@@ -277,12 +276,12 @@ Hybrid types \cite{flanagan06} are a well-known example in this style; others in
 work of Ou \etal \cite{Ou2004}, Wadler and Findler \cite{WadlerF09}, and Gronski
 \etal \cite{Gronski06}, Belo \etal \cite{Greenberg11} and Grennberg \etal \cite{Greenberg12}.
 %
-In the rest subsection we discuss manifest contracts and
+In the rest of this subsection we discuss manifest contracts and
 present a core calculus for them.
 
 \subsubsection{Manifest Contracts}
 
-Manifest Contracts Systems\cite{Greenberg12}, use casts,
+Manifest Contracts Systems\cite{Greenberg12}, use casts
 \ecast{\tau_s}{\tau_t}{l}
 to convert values from the source type $\tau_s$ 
 to the target type $\tau_t$ and raise \elabel{l}
@@ -299,7 +298,7 @@ if it has the target type \ttpos.
 At run-time, a check will be made that @n@ 
 is actually a positive integer and if it fails it will raise \elabel{l}.
 
-To generalize, for base contracts, a cast will behave just like a check on the target type: 
+To generalize, for base contracts a cast will behave just like a check on the target type: 
 applied to @n@, the cast either returns @n@ or raises \elabel{l} . 
 %
 A function application cast 
@@ -316,7 +315,7 @@ wrapping the argument @v@ in a (contravariant) cast between the domain types
 and wrapping the result of the application in a (covariant) cast between the
 codomain types.
 
-To better understand how function casts work lets once more consider 
+To illustrate how function casts work let's once more consider 
 the \predname\ example.
 %
 To get desired the type signature for \predname, 
@@ -358,7 +357,7 @@ Here, the application returns @0@, thus the final check fails
 and the program raises a blame.
 
 % testing the argument
-You may notice, that in both cases, \texttt{pred'} is applied to a 
+You may notice that in both cases \texttt{pred'} is applied to a 
 positive integer.
 Since a positive integer is not a primitive type, 
 the only way to get such a type is via a cast.
@@ -452,7 +451,7 @@ $$\begin{array}{cc}
   {\isWellFormed{\Gamma}{\tau_1} &&
    \isWellFormed{\Gamma}{\tau_2} && 
    \isCompatible{\tau_1}{\tau_2}}
-  {\hastype{\Gamma}{\ecast{\tau_1}{\tau_2}{}}{\tfun{}{\tau_1}{\tau_2}}}
+  {\hastype{\Gamma}{\ecast{\tau_1}{\tau_2}{l}}{(\tfun{x}{\tau_1}{\tau_2})}}
   [\tcast]
 \end{array}$$
 

@@ -115,7 +115,7 @@ Suter et all \cite{SuterKK11} increase the power of reasoning
 to support user defined recursive functions.
 % automatic inference of ghost variables
 Finally,  Unno et all \cite{UnnoTK13},
-created a relative complete system for higher-order functional programs.
+created a relatively complete system for higher-order functional programs.
  
 Apart from syntactic subtyping, SMT solvers can be used in other 
 refinement decidable systems:
@@ -141,7 +141,7 @@ to prove specification checking.
 \subsection{Liquid Types}\label{subsec:liquid}
 
 In Liquid Types\cite{LiquidPLDI08}, 
-Rondon et all restrict the refinement language according to a 
+Rondon \etal restrict the refinement language according to a 
 finite set of qualifiers, and achieve not only decidable type checking, but also automatic
 type inference.
 
@@ -188,7 +188,7 @@ We write $\qset^\star$
 for the set of all
 qualifiers not containing $\star$ that match some qualifier in \qset. 
 For example, when \qset\ is as defined as above, 
-and $x$, $y$ and $n$ are program variables.
+and $x$, $y$ and $n$ are program variables,
 $\qset^\star$
 includes the qualifiers
 $\{0 < x, x \leq v, y \leq v, v = n + 1, v <n\}$. 
@@ -198,11 +198,11 @@ conjunctions of qualifiers from $\qset ^ \star$.
 %\subsection{Overview}
 \mypara{Type Inference}
 Type inference is performed in three steps:
-(1) The vanilla type of each expression is refined with liquid variables
-which represent the unknown refinements.
-(2) Syntactic subtyping is used to create implication constraints 
-between the unknown variables and the concrete refinements.
-(3) A theorem prover is used to find the strongest conjunction
+(1) the vanilla type of each expression is refined with liquid variables
+which represent the unknown refinements;
+(2) syntactic subtyping is used to create implication constraints 
+between the unknown variables and the concrete refinements;
+(3) a theorem prover is used to find the strongest conjunction
 of qualifiers in \qset\
 that satisfies the subtyping constraints.   
 
@@ -217,9 +217,9 @@ $$
 
 The liquid type for @pred@ can be inferred in three steps:
 
-(Step 1) By Hindley-Milner algorithm, 
+(Step 1) By Hindley-Milner, 
 we can infer that @pred@ has the type @Int -> Int@.
-Using this type, we create a template for the liquid type of @pred@,
+Using this type we create a template for the liquid type of @pred@,
 $$\centering
 \begin{tabular}{c}
 \begin{code}
@@ -241,7 +241,7 @@ $$\centering
 \end{code}
 \end{tabular}
 $$
-
+%
 and use it to construct type of @pred@'s result:
 $$\centering
 \begin{tabular}{c}
@@ -262,7 +262,7 @@ The above subtype reduces to the following constraint:
 $$
 \texttt{v = n - 1} \Rightarrow \texttt{kp}
 $$
-(Step 3)Since the program is ``open'', i.e., there are no calls to @pred@,
+(Step 3) Since the program is ``open'', i.e., there are no calls to @pred@,
 we assign @kp@ true, meaning that any integer argument can be
 passed, and use a theorem prover to find the strongest conjunction
 of qualifiers in \qset\

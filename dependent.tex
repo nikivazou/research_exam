@@ -3,8 +3,8 @@
 %\subsection{Overview}
 
 Functional programming languages, like ML and Haskell,
-come with strong static types system, which detects a lot 
-of errors at compile-time and enhances code documentation.
+come with strong static type systems, which detect a lot 
+of errors at compile-time and enhance code documentation.
 
 
 The utility of these type systems stems from their ability to predict, 
@@ -12,7 +12,7 @@ at compile-time, invariants about the run-time values computed by the program.
 %
 Unfortunately, classical type systems only
 capture relatively coarse invariants. For example, the system can
-express the fact that a variable @i@ is of the type @Int@, 
+express the fact that a variable @i@ is of type @Int@, 
 meaning that it is always an integer, 
 but not that it is always an integer with a
 certain property, say different than zero. 
@@ -55,14 +55,14 @@ the type system should check that the real arguments do not
 violate its specification.
 %
 For instance, 
-@safeDiv 8 9@ is safe, since @9@ is always different that zero.
-But, @safeDiv 8 0@ should create a type error.
+@safeDiv 8 9@ is safe, since @9@ is always different that zero,
+but @safeDiv 8 0@ should create a type error.
 Apart from concrete values, @safeDiv@ can be applied to arbitrary program expressions:
 @safeDiv n m@ is safe only if 
 @m@ is an integer different than zero.
 
 \mypara{Refinement Function Types}
-Refinement function types\cite{cayenne, flanagan06}, allow the specification of the 
+Refinement function types~\cite{cayenne, flanagan06} allow the specification of the 
 result to depend on the argument.
 %
 A parameter is used to bind the argument
@@ -71,7 +71,7 @@ and can appear in the refinement of the result.
 %Dependent types, allow the refinement of the result of a function
 %to depend on function's arguments.
 As an example, we define a @pred@ function, 
-that takes as argument a positive integer @n@ and returns the its predecessor.
+which takes as argument a positive integer @n@ and returns the its predecessor.
 Refinement function types allow us to give @pred@ a type
 that exactly captures this behaviour:
 %
@@ -96,7 +96,7 @@ and decides whether the specifications hold for the program.
 %
 Informally, it checks that 
 each expression satisfies its type, 
-for example, the @pred@ definition actually returns the 
+for example, that the @pred@ definition actually returns the 
 predecessor of its argument,
 or that 
 at each function application the arguments satisfy
@@ -128,11 +128,11 @@ if the refinement language is restricted, i.e., is less expressive,
 verification can be decidable.
 
 The rest of this paper is organized as follows:
-In section \ref{subsec:formal}, we present a core calculus
+In section \ref{subsec:formal} we present a core calculus
 that constitutes the base for many refinement type systems.
-In section \ref{sec:undec},
+In section \ref{sec:undec}
 we describe reasoning in undecidable refinement type systems.
-In section \ref{sec:liquid}, 
+In section \ref{sec:liquid}
 we present less expressive type systems
 that are decidable.
 In section \ref{sec:abstract} 
@@ -160,7 +160,7 @@ which take the basic types, integer and boolean, respectively.
 A basic type can be refined with a predicate to construct a basic
 refinement type.
 Refinement types also contain function types, 
-in which, 
+in which 
 a variable binds the argument,
 so that the result refinement can refer to it.  
 %
@@ -171,7 +171,7 @@ expressions, the type system is undecidable, but
 $p$ can be restricted in such a way as to render 
 the type system decidable.
 %
-Finally, we define a typing environment $\Gamma$, that maps variables to their type,
+Finally, we define a typing environment $\Gamma$ that maps variables to their type,
 and will be used in the rules.
 
 
@@ -263,7 +263,7 @@ the parameter $x$ should be replaced with the actual argument $e_2$.
 %\subsubsection{wf}
 \mypara{Wellformedness rules}
 Wellformedness rules  
-state that a type $\tau$ is well-formed under environment
+state that a type $\tau$ is well-formed under an environment
 $\Gamma$, that is, the refinements in $\tau$ are boolean 
 expressions in the environment $\Gamma$.
 %
@@ -284,7 +284,7 @@ in an environment extended with the argument parameter.
 \mypara{Subtyping rules}
 Consider that the predefined type for the integer $2$
 is an integer that is exactly equal to $2$.
-The type system can check,via the rule \tconst , that 
+The type system can check, via the rule \tconst , that 
 \hastype{\emptyset}{2}{\tref{\texttt{int}}{v = 2}}.
 If $2$ is applied to a function that expects a
 positive integer, say $f::\tfun{x}{\tref{\texttt{int}}{v>0}}{\tau}$,
@@ -300,16 +300,16 @@ $\tref{\texttt{int}}{v=2} \preceq \tref{\texttt{int}}{v>0}$.
 
 In the general case, subtyping rules
 state that the type $\tau_1$ is a subtype of the type
-$\tau_2$ under environment $\Gamma$, that is, when the free variables
+$\tau_2$ under environment $\Gamma$, i.e., when the free variables
 of $\tau_1$ and $\tau_2$
 are bound to values described by $\Gamma$, the set of values described
 by $\tau_1$ is contained in the set of values described by $\tau_2$. 
 We write \isSubType{\Gamma}{\tau_1}{\tau_2} and create one rule for every type:
 
-The rule \tsubBase serves two purposes:
+The rule \tsubBase serves two purposes.
 Firstly,
 it checks that the basic type is the same in the two types.
-Moreover, it checks that under the environment $\Gamma$, 
+Secondly, it checks that under the environment $\Gamma$, 
 the left hand side refinement implies the right hand side.
 The implication checking is enforced by a predicate \texttt{Valid} 
 which varies between the systems that we will describe.
@@ -350,7 +350,7 @@ $$\begin{array}{cc}
   {\hastype{\Gamma, x:\tau_x}{e}{\tau} &&     
   \isWellFormed{\Gamma}{\tau_x}
   }
-  {\hastype{\Gamma}{\efunt{x}{\tau_x}{e}}{\tfun{x}{\tau_x}{\tau}}}
+  {\hastype{\Gamma}{\efunt{x}{\tau_x}{e}}{(\tfun{x}{\tau_x}{\tau})}}
   [\tfunction]
 &
 \inference
