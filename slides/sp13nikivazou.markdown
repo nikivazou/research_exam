@@ -92,16 +92,42 @@
 `( τ11 -> τ12 ⇒ τ21 -> τ22 l f) v ->  τ12 ⇒ τ22 l (f ( τ21 ⇒
 τ11 l v)) `
 
+## The pred example
+    pred’ x = x − 1
+    pred = Int->Int ⇒ x : {v:Int|v > 0}->{v:Int|v = x - 1} l pred’
 
+## Safe Call
+    pred 2
+    = ( Int->Int ⇒ x : {v:Int|v > 0}->{v:Int|v = x - 1} l pred’) 2
+    → ( Int ⇒ {v:Int|v = 2 - 1} l ) (pred’( {v:Int|v > 0} ⇒ Int l 2))
+    → ( Int ⇒ {v:Int|v = 2 - 1} l ) (pred’ 2)
+    → ( Int ⇒ {v:Int|v = 2 - 1} l ) 1
+    → 1
+    
+## Raising Blame
+     pred’ x = 0
+     pred 2
+     = ( Int->Int ⇒ x : {v:Int|v > 0}->{v:Int|v = x - 1} l pred’) 2
+     → ( Int ⇒ {v:Int|v = 2 - 1} l ) (pred’( {v:Int|v > 0} ⇒ Int l 2))
+     → ( Int ⇒ {v:Int|v = 2 - 1} l ) (pred’ 2)
+     → ( Int ⇒ {v:Int|v = 2 - 1} l ) 0
+     → ⇑l
 
+## Blame the argument
+    pred (( Int ⇒ {v:Int|v > 0}zero) 0) → ⇑ zero
 
-- `<s => t>l e`
-- statically : if `e :: s` then `e :: t`
-- dynamically: if `e :: t` then `return e` else `|| l`
+## Liquid Types
+    pred :: n:{v:Int | v > 0} -> {v:Int | n - 1}
+    pred n = n-1
+- `n:{v:Int | v > 0}`
+- `(-) :: x:Int -> y:Int -> {v:Int | v = x - y}`
+- `{v:Int | v = x - y}[x/n][y/1] = {v:Int | v = n - 1}`
+- `{v:Int | v = n - 1} <: {v:Int | v = n - 1}`
+- SMT solver!
 
-## Riner Refinement Types
-
-- `12 :: {v:Int | v = 12} <: {v:Int | Pos v && Even v}`
+## Application
+- `pred 2`
+- `pred 0`
 
 ## A max function
 
