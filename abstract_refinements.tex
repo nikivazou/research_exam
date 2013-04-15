@@ -278,7 +278,7 @@ In other words, we can verify the desired type of @plusminus@.
 
 Next, we illustrate how abstract invariants allow us to 
 specify and verify index-dependent invariants of key-value maps. 
-To this end, we encode \emph{extensible vectors} 
+To this end, we encode vectors
 as functions from @Int@ to 
 some generic range @a@. Formally, we specify vectors as 
 %
@@ -288,9 +288,9 @@ data Vec a <dom :: Int -> Bool, rng :: Int -> a -> Bool>
 \end{code}\end{tabular}$$
 %
 Here, we are parameterizing the definition of the type @Vec@ 
-with \emph{two} abstract refinements, @dom@ and @rng@, which
+with two abstract refinements, @dom@ and @rng@, which
 respectively describe the \emph{domain} and \emph{range} of the vector.
-That is, @dom@ describes the set of \emph{valid} indices, 
+That is, @dom@ describes the set of valid indices, 
 and @rng@ specifies an invariant relating each @Int@ index
 with the value stored at that index.
 
@@ -366,10 +366,10 @@ data [a] <p :: a -> a -> Bool> where
 The definition states that a value of type @[a]<p>@ 
 is either empty (@[]@) or constructed from a pair of  
 a \emph{head} @h::a@ and a \emph{tail} of a list of 
-@a@ values \emph{each} of which satisfies the refinement @(p h)@. 
+@a@ values each of which satisfies the refinement @(p h)@. 
 Furthermore, the abstract refinement @p@ holds recursively
 within the tail, ensuring that the relationship @p@ 
-holds between \emph{all} pairs of list elements.
+holds between all pairs of list elements.
 
 Thus, by plugging in appropriate concrete refinements, 
 we can define the following aliases, which correspond 
@@ -382,7 +382,7 @@ type UniqList a = [a]<{\h v -> h != v}>
 %
 That is, @IncrList a@ (resp. @DecrList a@) describes a list sorted
 in increasing (resp. decreasing) order, and @UniqList a@ describes
-a list of \emph{distinct} elements, i.e., not containing any duplicates.
+a list of distinct elements, i.e., not containing any duplicates.
 We can use the above definitions to verify
 %
 $$\centering\begin{tabular}{c}\begin{code}
@@ -406,7 +406,7 @@ insert y (x:xs)
   | otherwise     = x : insert y xs
 \end{code}\end{tabular}$$
 %
-Thus, abstract refinements allow us to \emph{decouple} the definition 
+Thus, abstract refinements allow us to decouple the definition 
 of the list from the actual invariants that hold.
 This, in turn, allows us to conveniently reuse the same 
 underlying (non-refined) type to 
@@ -440,11 +440,11 @@ type variables; thus the user does not have to explicitly annotate the code with
 
 We used HSolve to verify 
 several benchmarks, among which are GHC's official sorting implementation for lists
-and two GHC libraries (Data.Map.Base and Data.Set.Splay) that reason about Binary Search Trees.
+and two GHC libraries (@Data.Map.Base@ and @Data.Set.Splay@) that reason about Binary Search Trees.
 The specification invariants are usually simple, as abstract refinements
 greatly simplify writing specifications for the majority of interface or public functions.
 Moreover, the verification procedure required only a few code modifications, 
-which include reordering arguments or inserting ghost variables, 
+which include reordering arguments or inserting ``ghost variables'', 
 to make explicit values over which various invariants depend.
 
 \subsection{Formal Language}

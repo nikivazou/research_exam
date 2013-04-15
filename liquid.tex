@@ -37,7 +37,7 @@ for constraint solving.
 %
 Finally, they created DML(C)~\cite{XiPfenning99}, 
 an extension of ML with refinement types, that supports 
-array bound check elimination,
+array bounds check elimination,
 redundant pattern matching clause removal, 
 tag check elimination and untagged representation of datatypes.
 %
@@ -116,6 +116,12 @@ to support user defined recursive functions.
 % automatic inference of ghost variables
 Finally, Unno \etal \cite{UnnoTK13},
 created a relatively complete system for higher-order functional programs.
+
+%% Partial property: if the program terminates then it is safe 
+% relatively completeness for every partial property, if it is safe
+% there exists a derivation.
+% refinemet language: FOL including all Peano arithmetic
+% extended with parameters
  
 Apart from syntactic subtyping, SMT solvers can be used in other 
 refinement decidable systems:
@@ -172,24 +178,24 @@ possible types is bounded.
 \mypara{Logical Qualifiers and Liquid Types}
 A logical qualifier is a
 boolean-valued expression over the program variables, 
-the special value variable $v$ which is distinct from the
+the special value variable @v@ which is distinct from the
 program variables, and the special placeholder variable $\star$ that
 can be instantiated with program variables. 
 Let \qset be the set of logical qualifiers
-$\{0 < \star, \star \leq v, v < \star,  v = \star + 1\}$. 
+@{0 < @$\star$@, v < @$\star$@,  v = @$\star$@ + 1}@. 
 %
 A qualifier $q$ matches the qualifier $q'$
 if replacing some variables in $q$ with $\star$ yields $q'$.
 For example, the qualifier
-$x \leq v$ matches the qualifier $\star \leq v$. 
+@v < x@ matches the qualifier @v < @$\star$. 
 $\qset^\star$
 is the set of all
 qualifiers not containing $\star$ that match some qualifier in \qset. 
 For instance, %when \qset\ is as defined as above, 
-if $x$, $y$ and $n$ are program variables,
+if @x@, @y@ and @n@ are program variables,
 $\qset^\star$
 includes the qualifiers
-$\{0 < x, x \leq v, y \leq v, v = n + 1, v < n\}$. 
+@{0 < x, v = n + 1, v < n, v < y}@. 
 A liquid type over \qset\ is a refinement type where the refinement predicates are
 conjunctions of qualifiers from $\qset ^ \star$.
 
@@ -315,12 +321,12 @@ that can be proven in the third step.
 
 Given the above type signature 
 if @pred@ is called with some positive integer value, say @2@,
-then in the call site the constraint $v = 2 \Rightarrow v >0$ will be generated, 
+then in the call site the constraint @v = 2 @$\Rightarrow$@ v >0@ will be generated, 
 that can be statically verified.
 %
-On the other hand, if it is called with a non-positive value, 
+However, if it is called with a non-positive value, 
 say @0@, we will get the unsatisfied constraint
-$v = 0 \Rightarrow v > 0$, 
+@v = 0 @$\Rightarrow$@ v > 0@, 
 so the program will be unsafe.
 
 \subsubsection{Applications of Liquid Types}
