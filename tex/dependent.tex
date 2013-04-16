@@ -92,6 +92,33 @@ pred 2 :: {v:Int | v = n-1}[2/n] = {v:Int | v = 1}
 Thus, for each concrete argument, the result should be the predecessor 
 of this argument.
 
+\mypara{Specifications}
+A \textit{specification}~\cite{Lamsweerde00} is the expression in some 
+formal language and at some level 
+of abstraction of a collection of properties 
+some program should satisfy.
+%
+%Specifications have syntax and semantics to 
+%describe and interpret program properties. 
+%
+Specifications can be expressed in various techniques.
+%based on the kind of properties they are to express.
+%
+For example,
+temporal logic can be used to express history-based
+specifications,
+e.g., to reason about program's behaviour over time,
+while monitors can be used to express state-based specifications, 
+e.g., reasoning about concurrency.
+%
+In this paper we use refinement type signatures
+to describe (pure) functional specifications, 
+i.e., the program is specified as a collection of mathematical functions.
+%
+This way, we limit ourselves to ignore features such as
+temporal constrains, imperative features and concurrency. 
+
+
 \mypara{Verification}
 \textit{Verification} is a procedure that takes as input 
 a program, i.e.,  definitions for functions and values,
