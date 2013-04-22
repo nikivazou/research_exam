@@ -352,74 +352,106 @@ or efficiently compute a Fibonacci number.
 
 
 \subsection{Recursive Invariants}
-Finally, we turn our attention to recursively defined datatypes, and show 
-how abstract refinements allow us to specify and verify high-level
-invariants that relate the elements of a recursive structure.
-Consider the following refined definition for lists:
+Finally, we describe how we use abstract refinements to reason about 
+properties of recursive data structures.
 %
+For the purpose of illustration, we define a refined version of a @List@ datatype with values
+of type @a@:
 $$\centering\begin{tabular}{c}\begin{code}
-data [a] <p :: a -> a -> Bool> where
-  []  :: [a]<p>
-  (:) :: h:a -> [a<p h>]<p> -> [a]<p>
+data List a <p :: a -> a -> Bool>
+  = N
+  | C (hd :: a) (tl :: List <p> (a <p h>))
 \end{code}\end{tabular}$$
+We are parametrizing the @List@ over an abstract refinement @p@
+that relates two elements of type @a@.
+With this, the list is either the empty list @N@, 
+or contains a head @hd@ of type
+@a@ and a tail @tl@ which is a list of elements of type @a<p h>@, 
+i.e., these elements satisfy the abstract refinement @p@ at the head.
+Since this definition is recursively applied, 
+the abstract refinement @p@ holds
+between each pair of elements in the list.
 
-The definition states that a value of type @[a]<p>@ 
-is either empty (@[]@) or constructed from a pair of  
-a \emph{head} @h::a@ and a \emph{tail} of a list of 
-@a@ values each of which satisfies the refinement @(p h)@. 
-Furthermore, the abstract refinement @p@ holds recursively
-within the tail, ensuring that the relationship @p@ 
-holds between all pairs of list elements.
+\mypara{Unfolding Lists}
+To demonstrate the previous property, 
+we will unfold a @List@ with three elements 
+that satisfies an abstract refinement @p@.
+Consider such a list:
+%
+$$\centering\begin{tabular}{c}\begin{code}
+C h1 (C h2 (C h3 N)) :: List <p> a
+\end{code}\end{tabular}$$
+%
+If we unfold this list once, by the definition of the @C@ data constructor, 
+the first element is of type @a@, 
+while the rest is a list with values
+that satisfy @p@ at the first element,
+i.e., @(C h2 (C h3 N)) :: List <p> a<p h1>@.
+%
+With a second unfold
+we get that the second element 
+satisfies @p@ at the first element,
+i.e., \hbox{@h2::a<p h1>@},
+while the rest is a list with values
+that satisfy @p@ at both the first and the second element, 
+i.e., \hbox{@C h3 N :: List <p> a<p h1 && p h2>@}.
+%
+With the last unfold we get that the last element satisfies @p@
+at all the previous elements,
+i.e., \hbox{@h3 :: a<p h1 && p h2>@},
+while the empty list satisfies @p@ at every list element,
+i.e., 
+\hbox{@N  :: List <p> a<p h1 && p h2 && p3>@},
+which holds as by its definition the empty list @N@ satisfies any refinement.
 
-Thus, by plugging in appropriate concrete refinements, 
-we can define the following aliases, which correspond 
-to the informal notions implied by their names:
-$$\centering\begin{tabular}{c}\begin{code}
-type IncrList a = [a]<{\h v -> h <= v}>
-type DecrList a = [a]<{\h v -> h >= v}>
-type UniqList a = [a]<{\h v -> h != v}>
-\end{code}\end{tabular}$$
-%
-That is, @IncrList a@ (resp. @DecrList a@) describes a list sorted
-in increasing (resp. decreasing) order, and @UniqList a@ describes
-a list of distinct elements, i.e., not containing any duplicates.
-We can use the above definitions to verify
+Thus, @p@ holds between every pair of the list, 
+as for any two two elements @hi@ and @hj@, with @i < j@, at the @i@th unfold
+@hj@ satisfies @p@ at @hi@.
+
+If we instantiate the abstract refinement @p@ with the concrete refinement 
+\hbox{@{\h v -> h <= v}@},
+that expresses that each values is greater than the head, 
+we get that 
+each element is greater than all its previous in the list.
+So we describe an increasing list:
 %
 $$\centering\begin{tabular}{c}\begin{code}
-[1, 2, 3, 4] :: IncrList Int
-[4, 3, 2, 1] :: DecrList Int
-[4, 1, 3, 2] :: UniqList Int
+type IncrList a = List <{\h v -> h <= v}> a
 \end{code}\end{tabular}$$
 %
-More interestingly, we can verify that the usual algorithms 
-produce sorted lists:
+We can describe different list properties,
+by embedding appropriate concrete refinements.
+For instance, if we use a refinement that expresses that each value 
+is less than the head, i.e., \hbox{@{\h v -> h >= v}@} or 
+different from it, i.e., \hbox{@{\h v -> h ~= v}@},
+we can describe decreasing or unique element lists.
+
+\mypara{Using Lists}
+We can use the refined type for lists 
+to verify list properties.
+As an example, our system can verify that the following 
+inserting sort algorithm actually returns 
+an increasing list.
 %
 $$\centering\begin{tabular}{c}\begin{code}
 insertSort :: (Ord a) => [a] -> IncrList a 
-insertSort []     = []
-insertSort (x:xs) = insert x (insertSort xs) 
+insertSort = foldr insert N
 
 insert :: (Ord a) => a -> IncrList a -> IncrList a 
-insert y []       = [y]
-insert y (x:xs) 
-  | y <= x        = y : x : xs
-  | otherwise     = x : insert y xs
+insert y N       = C y N
+insert y (C x xs) | y <= x        = C y (C x xs)
+                  | otherwise     = C x (insert y xs)
 \end{code}\end{tabular}$$
-%
-Thus, abstract refinements allow us to decouple the definition 
-of the list from the actual invariants that hold.
-This, in turn, allows us to conveniently reuse the same 
-underlying (non-refined) type to 
-express various properties;
-%implement various algorithms 
-%unlike, say, singleton-type based implementations which require 
-%up to three different types of lists (with three different ``nil" and ``cons" 
-%constructors~\cite{Sheard06}). 
-%
-which, makes abstract refinements 
-convenient for verifying complex sorting implementations like that of 
-@Data.List.sort@ which, for efficiency, use lists with different 
-properties (e.g., increasing and decreasing).
+
+\begin{comment}
+It is important to note that abstract refinements allow us to distinguish the list definition
+from the invariants that hold.
+%Thus, we can use the same list definition with different properties in different point of the program.
+As a consequence, they enable verification of complex algorithms
+that establish different invariance for lists,
+such as the official Ghc's sorting algorithm, 
+that uses both increasing and decreasing lists.
+\end{comment}
 
 \subsection{Implementation}
 We implemented abstract refinements in HSolve, 
