@@ -699,15 +699,15 @@ type IncrList a = [a] <\h v -> h <= v>
 ## insert to an IncrList (1/2)
 
 ~~~~~{.haskell}
-insert :: y:a -> IncrList a -> IncrList a
-insert y []     = []
-insert y (x:xs) | y < x     = y : x : xs 
-                | otherwise = y : insert y xs
+insert :: y: List a -> IncrL a -> IncrL a
+insert y N        = N
+insert y (x`C`xs) | y < x     = y `C` x `C` xs 
+                  | otherwise = y `c` insert y xs
 ~~~~~
 
 - Given
     - x  :: a
-    - xs :: IncrList {v:a | x &le; v}
+    - xs :: IncrL {v:a | x &le; v}
 - If y < x, then
     - xs     :: IncrList {v:a | x &le; v &and; y &le; v}
     - x      :: {v:a | y &le; v}
@@ -734,8 +734,8 @@ insert y (x:xs) | y < x     = y : x : xs
 ## insert Sort
 
 ~~~~~{.haskell}
-insertSort :: xs:[a] -> OList a
-insertSort = foldr insert []
+insertSort :: xs:[a] -> IncrL a
+insertSort = foldr insert N
 ~~~~~
 
 - Given
